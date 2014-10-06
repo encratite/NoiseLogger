@@ -5,5 +5,5 @@
 class AlsaException: Fall::Exception
 {
 public:
-	AlsaException(std::string const & functionName, int errorCode);
+	AlsaException(const std::string & functionName, int errorCode);
 };

@@ -1,7 +1,7 @@
 #include <Client/AlsaPcm.hpp>
 
 template <typename SampleType>
-	AlsaPcm<SampleType>::AlsaPcm(std::string const & deviceName, snd_pcm_format_t format, unsigned sampleRate, unsigned latency, unsigned bufferLength):
+	AlsaPcm<SampleType>::AlsaPcm(const std::string & deviceName, snd_pcm_format_t format, unsigned sampleRate, unsigned latency, unsigned bufferLength):
 	_deviceName(deviceName),
 	_format(format),
 	_sampleRate(sampleRate),
@@ -48,7 +48,7 @@ template <typename SampleType>
 }
 
 template <typename SampleType>
-	SampleType const * AlsaPcm<SampleType>::read()
+	const SampleType * AlsaPcm<SampleType>::read()
 {
 	int error = snd_pcm_readi(_pcm, _buffer, static_cast<snd_pcm_uframes_t>(_sampleCount));
 	errorCheck("snd_pcm_readi", error);
@@ -56,7 +56,7 @@ template <typename SampleType>
 }
 
 template <typename SampleType>
-	void AlsaPcm<SampleType>::errorCheck(std::string const & functionName, int error)
+	void AlsaPcm<SampleType>::errorCheck(const std::string & functionName, int error)
 {
 	if(error < 0)
 		throw AlsaException(functionName, error);

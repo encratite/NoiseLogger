@@ -14,13 +14,13 @@ public:
 	// Sample rate in Hz
 	// Latency in milliseconds
 	// Buffer length in milliseconds
-	AlsaPcm(std::string const & deviceName, snd_pcm_format_t format, unsigned sampleRate, unsigned latency, unsigned bufferLength);
+	AlsaPcm(const std::string & deviceName, snd_pcm_format_t format, unsigned sampleRate, unsigned latency, unsigned bufferLength);
 	~AlsaPcm();
 	
 	void open();
 	void close();
 	
-	SampleType const * read();
+	const SampleType * read();
 	
 private:
 	std::string _deviceName;

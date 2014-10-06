@@ -5,10 +5,11 @@
 class NoiseLogger
 {
 public:
+	typedef short SampleType;
 	NoiseLogger(const std::string & deviceName, unsigned sampleRate, unsigned latency, unsigned loggingInterval);
 	
 	void run();
 	
 private:
-	AlsaPcm<float> _pcm;
+	AlsaPcm<short> _pcm;
 };

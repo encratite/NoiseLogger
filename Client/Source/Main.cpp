@@ -3,6 +3,8 @@
 #include <Fall/Configuration.hpp>
 #include <Fall/Exception.hpp>
 
+#include <Client/NoiseLogger.hpp>
+
 namespace
 {
 	const std::string configurationPath("NoiseLogger.conf");
@@ -18,6 +20,8 @@ void runNoiseLogger()
 	unsigned latency = configuration.getNumber<unsigned>("latency", 100);
 	// Logging interval length, in milliseconds
 	unsigned loggingInterval = configuration.getNumber<unsigned>("loggingInterval", 1000);
+	NoiseLogger logger(deviceName, sampleRate, latency, loggingInterval);
+	logger.run();
 }
 
 int main(int argc, char * * argv)

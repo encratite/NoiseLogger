@@ -10,7 +10,7 @@ template <typename SampleType>
 	_pcm(nullptr),
 	_buffer(nullptr)
 {
-	_sampleCount = static_cast<std::size_t>((sampleRate * bufferLength) / 1000);
+	_frameCount = static_cast<std::size_t>((sampleRate * bufferLength) / 1000);
 }
 
 template <typename SampleType>
@@ -35,7 +35,7 @@ template <typename SampleType>
 	unsigned latencyMicroseconds = _latency * 1000;
 	error = snd_pcm_set_params(_pcm, _format, SND_PCM_ACCESS_RW_INTERLEAVED, channelCount, _sampleRate, enableSoftwareResampling, latencyMicroseconds);
 	errorCheck("snd_pcm_set_params", error);
-	_buffer = new SampleType[_sampleCount];
+	_buffer = new SampleType[_frameCount];
 }
 
 template <typename SampleType>
@@ -48,10 +48,16 @@ template <typename SampleType>
 }
 
 template <typename SampleType>
-	const SampleType * AlsaPcm<SampleType>::read()
+	void AlsaPcm<SampleType>::read()
 {
-	int error = snd_pcm_readi(_pcm, _buffer, static_cast<snd_pcm_uframes_t>(_sampleCount));
+	int error = snd_pcm_readi(_pcm, _buffer, static_cast<snd_pcm_uframes_t>(_frameCount));
 	errorCheck("snd_pcm_readi", error);
+}
+
+template <typename SampleType>
+	const SampleType * AlsaPcm<SampleType>::getBuffer(std::size_t & frameCount)
+{
+	frameCount = _frameCount;
 	return _buffer;
 }
 

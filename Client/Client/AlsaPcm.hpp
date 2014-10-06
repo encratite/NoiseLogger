@@ -20,7 +20,9 @@ public:
 	void open();
 	void close();
 	
-	const SampleType * read();
+	void read();
+	
+	const SampleType * getBuffer(std::size_t & frameCount);
 	
 private:
 	std::string _deviceName;
@@ -28,7 +30,7 @@ private:
 	unsigned _sampleRate;
 	unsigned _latency;
 	unsigned _bufferLength;
-	std::size_t _sampleCount;
+	std::size_t _frameCount;
 	
 	snd_pcm_t * _pcm;
 	SampleType * _buffer;

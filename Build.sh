@@ -2,7 +2,7 @@ output=NoiseLoggerClient
 sourceFiles=Client/Source/*.cpp
 objectDirectory=Client/Object
 outputDirectory=Output
-libraries="-L../Fall/Output -lFall -lasound"
+libraries="-L../Fall/Output -lFall -lasound -llzma"
 includes="-I../Fall -IClient"
 compiler=g++
 
@@ -18,7 +18,7 @@ do
 	$compiler -std=c++11 -g -Wall $includes -c $sourceFile -o $object $libraries
 	if [[ $? != 0 ]]
 	then
-		exit
+		exit 1
 	fi
 	objects="$objects $object"
 done

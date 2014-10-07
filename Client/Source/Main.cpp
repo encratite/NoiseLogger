@@ -13,6 +13,7 @@ namespace
 void runNoiseLogger()
 {
 	Fall::Configuration configuration(configurationPath);
+	// An ALSA device string such as "hw:1,0"
 	std::string deviceName = configuration.getString("deviceName", "default");
 	// PCM sample rate, in Hz
 	unsigned sampleRate = configuration.getNumber<unsigned>("sampleRate", 8000);
@@ -20,7 +21,9 @@ void runNoiseLogger()
 	unsigned latency = configuration.getNumber<unsigned>("latency", 100);
 	// Logging interval length, in milliseconds
 	unsigned loggingInterval = configuration.getNumber<unsigned>("loggingInterval", 1000);
-	NoiseLogger logger(deviceName, sampleRate, latency, loggingInterval);
+	std::size_t valuesPerPacket = configuration.getNumber<std::size_t>("valuesPerPacket", 10);
+	uint32_t compressionLevel = configuration.getNumber<uint32_t>("compressionLevel", 6);
+	NoiseLogger logger(deviceName, sampleRate, latency, loggingInterval, valuesPerPacket, compressionLevel);
 	logger.run();
 }
 

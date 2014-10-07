@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include <alsa/asoundlib.h>
 
@@ -10,7 +11,7 @@ template <typename SampleType>
 	class AlsaPcm
 {
 public:
-	// Device name is a string such as "default" or "HW:1,0" where 1 is the device and 0 the sub-device
+	// The device name is a string such as "default" or "hw:1,0" where 1 is the device and 0 the sub-device
 	// Sample rate in Hz
 	// Latency in milliseconds
 	// Buffer length in milliseconds
@@ -19,11 +20,10 @@ public:
 		_format(format),
 		_sampleRate(sampleRate),
 		_latency(latency),
-		_bufferLength(bufferLength),
-		_pcm(nullptr),
-		_buffer(nullptr)
+		_pcm(nullptr)
 	{
-		_frameCount = static_cast<std::size_t>((sampleRate * bufferLength) / 1000);
+		std::size_t frameCount = static_cast<std::size_t>((sampleRate * bufferLength) / 1000);
+		_buffer.resize(frameCount);
 	}
 
 	~AlsaPcm()
@@ -46,26 +46,22 @@ public:
 		unsigned latencyMicroseconds = _latency * 1000;
 		error = snd_pcm_set_params(_pcm, _format, SND_PCM_ACCESS_RW_INTERLEAVED, channelCount, _sampleRate, enableSoftwareResampling, latencyMicroseconds);
 		errorCheck("snd_pcm_set_params", error);
-		_buffer = new SampleType[_frameCount];
 	}
 
 	void close()
 	{
-		if(_buffer != nullptr)
-			delete[] _buffer;
 		if(_pcm != nullptr)
 			snd_pcm_close(_pcm);
 	}
 
 	void read()
 	{
-		int error = snd_pcm_readi(_pcm, _buffer, static_cast<snd_pcm_uframes_t>(_frameCount));
+		int error = snd_pcm_readi(_pcm, _buffer.data(), static_cast<snd_pcm_uframes_t>(_buffer.size()));
 		errorCheck("snd_pcm_readi", error);
 	}
 
-	const SampleType * getBuffer(std::size_t & frameCount)
+	const std::vector<SampleType> & getBuffer()
 	{
-		frameCount = _frameCount;
 		return _buffer;
 	}
 	
@@ -74,11 +70,9 @@ private:
 	snd_pcm_format_t _format;
 	unsigned _sampleRate;
 	unsigned _latency;
-	unsigned _bufferLength;
-	std::size_t _frameCount;
 	
 	snd_pcm_t * _pcm;
-	SampleType * _buffer;
+	std::vector<SampleType> _buffer;
 	
 	void errorCheck(const std::string & functionName, int error)
 	{

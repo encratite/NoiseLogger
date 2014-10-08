@@ -4,4 +4,4 @@
 
 #include <Common/Serialization.hpp>
 
-void lzmaCompress(const ByteBuffer & input, ByteBuffer & output);
+void lzmaCompress(const ByteBuffer & input, ByteBuffer & output, uint32_t compressionLevel);

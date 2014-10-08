@@ -1,11 +1,13 @@
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <chrono>
 
 #include <Client/NoiseLogger.hpp>
 #include <Common/Compression.hpp>
+#include <Common/Debug.hpp>
 #include <Common/LogPacket.hpp>
 #include <Common/Serialization.hpp>
 
@@ -36,7 +38,7 @@ void NoiseLogger::readSamples()
 	uint64_t unixMilliseconds = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
 	LogSample logSample(unixMilliseconds, rootMeanSquare);
 	_logSamples.push_back(logSample);
-	std::cout << unixMilliseconds << ": " << rootMeanSquare << std::endl;
+	std::cout << unixMilliseconds << ": " << rootMeanSquare << " (" << _logSamples.size() << " sample(s))" << std::endl;
 	if(_logSamples.size() >= _valuesPerPacket)
 	{
 		try
@@ -53,15 +55,23 @@ void NoiseLogger::readSamples()
 
 void NoiseLogger::sendPacket()
 {
+	DEBUG_MARK;
 	LogSample const & firstSample = _logSamples.front();
 	std::vector<uint16_t> values;
 	for(auto const & logSample : _logSamples)
 		values.push_back(logSample.value);
+	DEBUG_MARK;
 	LogPacket packet(firstSample.timestamp, _readInterval, values);
+	DEBUG_MARK;
 	ByteBuffer serializedData;
+	DEBUG_MARK;
 	packet.serialize(serializedData);
+	DEBUG_MARK;
 	ByteBuffer compressedData;
-	lzmaCompress(serializedData, compressedData);
+	DEBUG_MARK;
+	lzmaCompress(serializedData, compressedData, _compressionLevel);
+	DEBUG_MARK;
 	double compressionRatio = (compressedData.size() * 100.0) / serializedData.size();
 	std::cout << "Compression ratio: " << std::fixed << std::setprecision(1) << compressionRatio << "%" << std::endl;
+	exit(0);
 }

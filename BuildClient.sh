@@ -2,8 +2,8 @@ output=NoiseLoggerClient
 sourceFiles=Client/Source/*.cpp
 objectDirectory=Client/Object
 outputDirectory=Output
-libraries="-L../Fall/Output -lFall -LOutput -lNoiseLoggerCommon -lasound -llzma"
 includes="-I../Fall -IClient -ICommon"
+libraries="-L../Fall/Output -lFall -LOutput -lNoiseLoggerCommon -lasound -llzma"
 compiler=g++
 
 mkdir -p $objectDirectory

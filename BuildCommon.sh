@@ -2,7 +2,7 @@ output=NoiseLoggerCommon
 sourceFiles=Common/Source/*.cpp
 objectDirectory=Object
 outputDirectory=Output
-includes="-ICommon"
+includes="-I../Fall -ICommon"
 compiler=g++
 
 mkdir -p $objectDirectory

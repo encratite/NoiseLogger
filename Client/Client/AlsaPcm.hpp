@@ -56,8 +56,20 @@ public:
 
 	void read()
 	{
-		int error = snd_pcm_readi(_pcm, _buffer.data(), static_cast<snd_pcm_uframes_t>(_buffer.size()));
-		errorCheck("snd_pcm_readi", error);
+		int result = snd_pcm_readi(_pcm, _buffer.data(), static_cast<snd_pcm_uframes_t>(_buffer.size()));
+		if(result == -EPIPE)
+		{
+			snd_pcm_status_t * status;
+			snd_pcm_status_alloca(&status);
+			result = snd_pcm_status(_pcm, status);
+			errorCheck("snd_pcm_status", result);
+			result = snd_pcm_prepare(_pcm);
+			errorCheck("snd_pcm_prepare", result);
+		}
+		else
+		{
+			errorCheck("snd_pcm_readi", result);
+		}
 	}
 
 	const std::vector<SampleType> & getBuffer()

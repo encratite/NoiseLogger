@@ -1,9 +1,8 @@
-output=NoiseLoggerClient
-sourceFiles=Client/Source/*.cpp
-objectDirectory=Client/Object
+output=NoiseLoggerCommon
+sourceFiles=Common/Source/*.cpp
+objectDirectory=Object
 outputDirectory=Output
-libraries="-L../Fall/Output -lFall -lasound -llzma"
-includes="-I../Fall -IClient"
+includes="-ICommon"
 compiler=g++
 
 mkdir -p $objectDirectory
@@ -15,7 +14,7 @@ do
 	outputFile=$(basename $sourceFile | cut -d. -f1).o
 	object=$objectDirectory/$outputFile
 	echo Building $sourceFile
-	$compiler -std=c++11 -g -Wall $includes -c $sourceFile -o $object $libraries
+	$compiler -std=c++11 -static -g -Wall $includes -c $sourceFile -o $object
 	if [[ $? != 0 ]]
 	then
 		exit 1
@@ -23,6 +22,7 @@ do
 	objects="$objects $object"
 done
 
-outputPath=$outputDirectory/$output
+outputPath=$outputDirectory/lib$output.a
 echo Building $outputPath
-$compiler -o $outputPath$objects $libraries
+
+ar rcs $outputPath$objects

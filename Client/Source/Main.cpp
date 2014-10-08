@@ -19,11 +19,11 @@ void runNoiseLogger()
 	unsigned sampleRate = configuration.getNumber<unsigned>("sampleRate", 8000);
 	// ALSA PCM latency, in milliseconds
 	unsigned latency = configuration.getNumber<unsigned>("latency", 100);
-	// Logging interval length, in milliseconds
-	unsigned loggingInterval = configuration.getNumber<unsigned>("loggingInterval", 1000);
+	// Read interval length, in milliseconds
+	unsigned readInterval = configuration.getNumber<unsigned>("readInterval", 1000);
 	std::size_t valuesPerPacket = configuration.getNumber<std::size_t>("valuesPerPacket", 10);
 	uint32_t compressionLevel = configuration.getNumber<uint32_t>("compressionLevel", 6);
-	NoiseLogger logger(deviceName, sampleRate, latency, loggingInterval, valuesPerPacket, compressionLevel);
+	NoiseLogger logger(deviceName, sampleRate, latency, readInterval, valuesPerPacket, compressionLevel);
 	logger.run();
 }
 

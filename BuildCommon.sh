@@ -14,7 +14,7 @@ do
 	outputFile=$(basename $sourceFile | cut -d. -f1).o
 	object=$objectDirectory/$outputFile
 	echo Building $sourceFile
-	$compiler -std=c++11 -static -g -Wall $includes -c $sourceFile -o $object
+	$compiler -std=c++11 -static -O3 -Wall $includes -c $sourceFile -o $object
 	if [[ $? != 0 ]]
 	then
 		exit 1

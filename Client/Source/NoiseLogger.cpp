@@ -55,22 +55,15 @@ void NoiseLogger::readSamples()
 
 void NoiseLogger::sendPacket()
 {
-	DEBUG_MARK;
 	LogSample const & firstSample = _logSamples.front();
 	std::vector<uint16_t> values;
 	for(auto const & logSample : _logSamples)
 		values.push_back(logSample.value);
-	DEBUG_MARK;
 	LogPacket packet(firstSample.timestamp, _readInterval, values);
-	DEBUG_MARK;
 	ByteBuffer serializedData;
-	DEBUG_MARK;
 	packet.serialize(serializedData);
-	DEBUG_MARK;
 	ByteBuffer compressedData;
-	DEBUG_MARK;
 	lzmaCompress(serializedData, compressedData, _compressionLevel);
-	DEBUG_MARK;
 	double compressionRatio = (compressedData.size() * 100.0) / serializedData.size();
 	std::cout << "Compression ratio: " << std::fixed << std::setprecision(1) << compressionRatio << "%" << std::endl;
 	exit(0);

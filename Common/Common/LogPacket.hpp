@@ -7,12 +7,12 @@ struct LogPacket
 {
 	// UNIX milliseconds UTC timestamp
 	uint64_t initialTimestamp;
-	// Number of milliseconds between successive values
+	// Number of milliseconds between successive samples
 	uint16_t interval;
-	// Root mean square values
-	std::vector<uint16_t> values;
+	// Root mean square samples
+	std::vector<uint16_t> samples;
 	
-	LogPacket(uint64_t initialTimestamp, uint16_t interval, std::vector<uint16_t> const & values);
+	LogPacket(uint64_t initialTimestamp, uint16_t interval, const std::vector<uint16_t> & samples);
 	
 	void serialize(std::vector<uint8_t> & buffer);
 };

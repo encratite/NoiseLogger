@@ -1,9 +1,21 @@
-drop table if exists volume cascade;
+set client_min_messages to warning;
 
-create table volume
+drop table if exists volume_log cascade;
+
+create table volume_log
 (
 	time timestamp,
-	mean smallint
+	volume integer not null,
+	primary key (time)
+);
+
+drop table if exists address_log;
+
+create table address_log
+(
+	address text,
+	last_log_time timestamp not null,
+	primary key (address)
 );
 
 create or replace function drop_functions() returns void as $$
@@ -22,21 +34,13 @@ end $$ language 'plpgsql';
 
 select drop_functions();
 
-create function insert_mean(mean_time timestamp, mean integer) returns void as $$
-declare
-	smallint_maximum integer := 32767;
-	compressed_mean smallint;
+create function insert_volume(volume_time timestamp, volume integer) returns void as $$
 begin
-	if mean > smallint_maximum then
-		compressed_mean := smallint_maximum;
-	else
-		compressed_mean := mean::smallint;
-	end if;
 	begin
-		insert into volume
-			(time, mean)
+		insert into volume_log
+			(time, volume)
 		values
-			(insert_mean.mean_time, compressed_mean);
+			(insert_volume.volume_time, insert_volume.volume);
 	exception when unique_violation then
 	end;
 end $$ language 'plpgsql';

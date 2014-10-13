@@ -1,6 +1,5 @@
 #include <cmath>
 #include <cstdint>
-#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <chrono>
@@ -11,17 +10,28 @@
 #include <Common/LogPacket.hpp>
 #include <Common/Serialization.hpp>
 
-NoiseLogger::NoiseLogger(const std::string & deviceName, unsigned sampleRate, unsigned latency, uint16_t readInterval, std::size_t valuesPerPacket, uint32_t compressionLevel):
+NoiseLogger::NoiseLogger(const std::string & deviceName, unsigned sampleRate, unsigned latency, uint16_t readInterval, std::size_t samplesPerPacket, uint32_t compressionLevel):
+	_state(NoiseLoggerStateIdle),
 	_pcm(deviceName, SND_PCM_FORMAT_S16, sampleRate, latency, readInterval),
 	_readInterval(readInterval),
-	_valuesPerPacket(valuesPerPacket),
+	_samplesPerPacket(samplesPerPacket),
 	_compressionLevel(compressionLevel)
 {
 }
 
+NoiseLogger::~NoiseLogger()
+{
+	_state = NoiseLoggerStateTerminating;
+	_communicationThread.join();
+}
+
 void NoiseLogger::run()
 {
+	if(_state != NoiseLoggerStateIdle)
+		throw Fall::Exception("Unable to start logger");
+	_state = NoiseLoggerStateRunning;
 	_pcm.open();
+	_communicationThread = std::thread(&NoiseLogger::communicate, this);
 	while(true)
 		readSamples();
 }
@@ -39,32 +49,29 @@ void NoiseLogger::readSamples()
 	LogSample logSample(unixMilliseconds, rootMeanSquare);
 	_logSamples.push_back(logSample);
 	std::cout << unixMilliseconds << ": " << rootMeanSquare << " (" << _logSamples.size() << " sample(s))" << std::endl;
-	if(_logSamples.size() >= _valuesPerPacket)
+	if(_logSamples.size() >= _samplesPerPacket)
 	{
-		try
 		{
-			sendPacket();
-		}
-		catch(Fall::Exception const & exception)
-		{
-			std::cerr << "Failed to tansmit packet: " << exception.getMessage() << std::endl;
+			Lock lock(_packetQueueMutex);
+			_packetQueue.push(_logSamples);
 		}
 		_logSamples.clear();
 	}
 }
 
-void NoiseLogger::sendPacket()
+void NoiseLogger::communicate()
 {
-	LogSample const & firstSample = _logSamples.front();
-	std::vector<uint16_t> values;
-	for(auto const & logSample : _logSamples)
-		values.push_back(logSample.value);
-	LogPacket packet(firstSample.timestamp, _readInterval, values);
+}
+
+void NoiseLogger::sendPacket(const LogSamples & logSamples)
+{
+	const LogSample & firstSample = logSamples.front();
+	std::vector<uint16_t> samples;
+	for (const auto & logSample : logSamples)
+		samples.push_back(logSample.sample);
+	LogPacket packet(firstSample.timestamp, _readInterval, samples);
 	ByteBuffer serializedData;
 	packet.serialize(serializedData);
 	ByteBuffer compressedData;
 	lzmaCompress(serializedData, compressedData, _compressionLevel);
-	double compressionRatio = (compressedData.size() * 100.0) / serializedData.size();
-	std::cout << "Compression ratio: " << std::fixed << std::setprecision(1) << compressionRatio << "%" << std::endl;
-	exit(0);
 }

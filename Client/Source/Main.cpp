@@ -4,6 +4,7 @@
 #include <Fall/Exception.hpp>
 
 #include <Client/NoiseLogger.hpp>
+#include <Client/NoiseLoggerConfiguration.hpp>
 
 namespace
 {
@@ -13,17 +14,18 @@ namespace
 void runNoiseLogger()
 {
 	Fall::Configuration configuration(configurationPath);
-	// An ALSA device string such as "hw:1,0"
-	std::string deviceName = configuration.getString("deviceName", "default");
-	// PCM sample rate, in Hz
-	unsigned sampleRate = configuration.getNumber<unsigned>("sampleRate", 11025);
-	// ALSA PCM latency, in milliseconds
-	unsigned latency = configuration.getNumber<unsigned>("latency", 100);
-	// Read interval length, in milliseconds
-	unsigned readInterval = configuration.getNumber<unsigned>("readInterval", 100);
-	std::size_t samplesPerPacket = configuration.getNumber<std::size_t>("samplesPerPacket", 600);
-	uint32_t compressionLevel = configuration.getNumber<uint32_t>("compressionLevel", 6);
-	NoiseLogger logger(deviceName, sampleRate, latency, readInterval, samplesPerPacket, compressionLevel);
+	NoiseLoggerConfiguration loggerConfiguration;
+	loggerConfiguration.deviceName = configuration.getString("deviceName", "default");
+	loggerConfiguration.sampleRate = configuration.getNumber<unsigned>("sampleRate", 11025);
+	loggerConfiguration.latency = configuration.getNumber<unsigned>("latency", 100);
+	loggerConfiguration.readInterval = configuration.getNumber<unsigned>("readInterval", 100);
+	loggerConfiguration.samplesPerPacket = configuration.getNumber<std::size_t>("samplesPerPacket", 600);
+	loggerConfiguration.maximumPacketQueueSize = configuration.getNumber<std::size_t>("maximumPacketQueueSize", 10);
+	loggerConfiguration.compressionLevel = configuration.getNumber<uint32_t>("compressionLevel", 6);
+	loggerConfiguration.logServerHost = configuration.getString("logServerHost");
+	loggerConfiguration.logServerPort = configuration.getNumber<uint16_t>("logServerPort");
+	loggerConfiguration.clientCertificatePath = configuration.getString("clientCertificatePath");
+	NoiseLogger logger(loggerConfiguration);
 	logger.run();
 }
 

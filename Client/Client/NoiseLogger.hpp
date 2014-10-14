@@ -3,16 +3,19 @@
 #include <cstdint>
 #include <queue>
 #include <vector>
+#include <string>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 
 #include <Client/AlsaPcm.hpp>
 #include <Client/LogSample.hpp>
+#include <Client/NoiseLoggerConfiguration.hpp>
 
 typedef int16_t SampleType;
 typedef std::vector<LogSample> LogSamples;
 typedef std::queue<LogSamples> PacketQueue;
-typedef std::lock_guard<std::mutex> Lock;
+typedef std::unique_lock<std::mutex> Lock;
 
 enum NoiseLoggerState
 {
@@ -24,23 +27,24 @@ enum NoiseLoggerState
 class NoiseLogger
 {
 public:
-	NoiseLogger(const std::string & deviceName, unsigned sampleRate, unsigned latency, uint16_t readInterval, std::size_t samplesPerPacket, uint32_t compressionLevel);
+	NoiseLogger(const NoiseLoggerConfiguration & configuration);
 	~NoiseLogger();
 	
 	void run();
 	
 private:
+	NoiseLoggerConfiguration _configuration;
 	NoiseLoggerState _state;
 	AlsaPcm<SampleType> _pcm;
 	LogSamples _logSamples;
-	uint16_t _readInterval;
-	std::size_t _samplesPerPacket;
-	uint32_t _compressionLevel;
 	std::thread _communicationThread;
 	std::mutex _packetQueueMutex;
+	std::condition_variable _packetAvailable;
 	PacketQueue _packetQueue;
 	
 	void readSamples();
+	void pushPacket();
+	void popPacket(LogSamples & logSamples);
 	void communicate();
 	void sendPacket(const LogSamples & logSamples);
 };

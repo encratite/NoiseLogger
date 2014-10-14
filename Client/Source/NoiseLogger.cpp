@@ -5,17 +5,16 @@
 #include <chrono>
 
 #include <Client/NoiseLogger.hpp>
+#include <Client/NoiseLoggerConfiguration.hpp>
 #include <Common/Compression.hpp>
 #include <Common/Debug.hpp>
 #include <Common/LogPacket.hpp>
 #include <Common/Serialization.hpp>
 
-NoiseLogger::NoiseLogger(const std::string & deviceName, unsigned sampleRate, unsigned latency, uint16_t readInterval, std::size_t samplesPerPacket, uint32_t compressionLevel):
+NoiseLogger::NoiseLogger(const NoiseLoggerConfiguration & configuration):
+	_configuration(configuration),
 	_state(NoiseLoggerStateIdle),
-	_pcm(deviceName, SND_PCM_FORMAT_S16, sampleRate, latency, readInterval),
-	_readInterval(readInterval),
-	_samplesPerPacket(samplesPerPacket),
-	_compressionLevel(compressionLevel)
+	_pcm(configuration.deviceName, SND_PCM_FORMAT_S16, configuration.sampleRate, configuration.latency, configuration.readInterval)
 {
 }
 
@@ -32,7 +31,7 @@ void NoiseLogger::run()
 	_state = NoiseLoggerStateRunning;
 	_pcm.open();
 	_communicationThread = std::thread(&NoiseLogger::communicate, this);
-	while(true)
+	while(_state == NoiseLoggerStateRunning)
 		readSamples();
 }
 
@@ -49,18 +48,43 @@ void NoiseLogger::readSamples()
 	LogSample logSample(unixMilliseconds, rootMeanSquare);
 	_logSamples.push_back(logSample);
 	std::cout << unixMilliseconds << ": " << rootMeanSquare << " (" << _logSamples.size() << " sample(s))" << std::endl;
-	if(_logSamples.size() >= _samplesPerPacket)
+	if(_logSamples.size() >= _configuration.samplesPerPacket)
 	{
-		{
-			Lock lock(_packetQueueMutex);
-			_packetQueue.push(_logSamples);
-		}
+		pushPacket();
 		_logSamples.clear();
 	}
 }
 
+void NoiseLogger::pushPacket()
+{
+	Lock lock(_packetQueueMutex);
+	_packetQueue.push(_logSamples);
+	while(_packetQueue.size() > _configuration.maximumPacketQueueSize)
+		_packetQueue.pop();
+	_packetAvailable.notify_one();
+}
+
+void NoiseLogger::popPacket(LogSamples & logSamples)
+{
+	Lock lock(_packetQueueMutex);
+	if(_packetQueue.empty())
+		_packetAvailable.wait(lock);
+	if(_state != NoiseLoggerStateRunning)
+		return;
+	logSamples = _packetQueue.front();
+	_packetQueue.pop();
+}
+
 void NoiseLogger::communicate()
 {
+	while(_state == NoiseLoggerStateRunning)
+	{
+		LogSamples logSamples;
+		popPacket(logSamples);
+		if(logSamples.empty())
+			continue;
+		sendPacket(logSamples);
+	}
 }
 
 void NoiseLogger::sendPacket(const LogSamples & logSamples)
@@ -69,9 +93,9 @@ void NoiseLogger::sendPacket(const LogSamples & logSamples)
 	std::vector<uint16_t> samples;
 	for (const auto & logSample : logSamples)
 		samples.push_back(logSample.sample);
-	LogPacket packet(firstSample.timestamp, _readInterval, samples);
+	LogPacket packet(firstSample.timestamp, _configuration.readInterval, samples);
 	ByteBuffer serializedData;
 	packet.serialize(serializedData);
 	ByteBuffer compressedData;
-	lzmaCompress(serializedData, compressedData, _compressionLevel);
+	lzmaCompress(serializedData, compressedData, _configuration.compressionLevel);
 }

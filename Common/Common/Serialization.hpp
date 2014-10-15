@@ -1,11 +1,8 @@
 #pragma once
 
-#include <endian.h>
-
 #include <cstdint>
-#include <vector>
 
-typedef std::vector<uint8_t> ByteBuffer;
+#include <Common/Types.hpp>
 
 template <typename Type>
 	void serialize(Type data, ByteBuffer & buffer)

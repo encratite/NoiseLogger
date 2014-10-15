@@ -4,6 +4,6 @@
 
 AlsaException::AlsaException(const std::string & functionName, int errorCode)
 {
-	std::string alsaMessage(snd_strerror(errorCode));
+	std::string alsaMessage(::snd_strerror(errorCode));
 	_message = functionName + " error: " + alsaMessage;
 }

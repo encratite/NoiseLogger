@@ -37,33 +37,33 @@ public:
 			throw new Fall::Exception("ALSA PCM has already been opened");
 		// Use blocking read/write mode
 		int openMode = 0;
-		int error = ::snd_pcm_open(&_pcm, _deviceName.c_str(), SND_PCM_STREAM_CAPTURE, openMode);
+		int error = snd_pcm_open(&_pcm, _deviceName.c_str(), SND_PCM_STREAM_CAPTURE, openMode);
 		errorCheck("snd_pcm_open", error);
 		// Mono recording
 		unsigned channelCount = 1;
 		// Disable software resampling
 		int enableSoftwareResampling = 0;
 		unsigned latencyMicroseconds = _latency * 1000;
-		error = ::snd_pcm_set_params(_pcm, _format, SND_PCM_ACCESS_RW_INTERLEAVED, channelCount, _sampleRate, enableSoftwareResampling, latencyMicroseconds);
+		error = snd_pcm_set_params(_pcm, _format, SND_PCM_ACCESS_RW_INTERLEAVED, channelCount, _sampleRate, enableSoftwareResampling, latencyMicroseconds);
 		errorCheck("snd_pcm_set_params", error);
 	}
 
 	void close()
 	{
 		if(_pcm != nullptr)
-			::snd_pcm_close(_pcm);
+			snd_pcm_close(_pcm);
 	}
 
 	void read()
 	{
-		int result = ::snd_pcm_readi(_pcm, _buffer.data(), static_cast<snd_pcm_uframes_t>(_buffer.size()));
+		int result = snd_pcm_readi(_pcm, _buffer.data(), static_cast<snd_pcm_uframes_t>(_buffer.size()));
 		if(result == -EPIPE)
 		{
 			snd_pcm_status_t * status;
 			snd_pcm_status_alloca(&status);
-			result = ::snd_pcm_status(_pcm, status);
+			result = snd_pcm_status(_pcm, status);
 			errorCheck("snd_pcm_status", result);
-			result = ::snd_pcm_prepare(_pcm);
+			result = snd_pcm_prepare(_pcm);
 			errorCheck("snd_pcm_prepare", result);
 		}
 		else

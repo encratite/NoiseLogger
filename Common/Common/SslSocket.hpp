@@ -15,8 +15,9 @@ public:
 	SslSocket();
 	~SslSocket();
 	
-	void connect(const std::string & host, uint16_t port);
-	void disconnect();
+	void connect(const std::string & host, uint16_t port, const std::string & certificatePath);
+	void bindAndListen(uint16_t port, const std::string & certificatePath);
+	void close();
 	
 	std::size_t read(void * buffer, std::size_t bufferSize);
 	void read(ByteBuffer & buffer);
@@ -27,7 +28,15 @@ public:
 private:
 	int _socket;
 	SSL_CTX * _sslContext;
+	SSL * _ssl;
 	
 	void initializeSsl();
-	void throwErrnoException(const std::string & message);
+	void checkSocket();
+	void createSocket();
+	sockaddr_in getAddress(unsigned long address, uint16_t port);
+	void createSslContext(const std::string & certificatePath);
+	
+	void closeAndThrow(const std::string & message);
+	void closeAndThrowErrno(const std::string & message);
+	void closeAndThrowSsl(const std::string & message);
 };

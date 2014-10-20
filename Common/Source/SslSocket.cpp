@@ -40,19 +40,36 @@ void SslSocket::connect(const std::string & host, uint16_t port, const std::stri
 	if(_socket != invalidSocket)
 		throw Fall::Exception("Unable to connect because the socket is already in use");
 	close();
-	hostent * hostEntity = gethostbyname(host.c_str());
-	if(hostEntity == nullptr)
-		closeAndThrow("Failed to resolve host name");
-	createSocket();
-	sockaddr_in address = getAddress(*reinterpret_cast<unsigned long *>(hostEntity->h_addr_list[0]), port);
-	int result = ::connect(_socket, reinterpret_cast<sockaddr *>(&address), sizeof(sockaddr));
-	if(result == -1)
-		closeAndThrowErrno("Failed to connect to server");
-	createSslContext(certificatePath);
-	SSL_set_connect_state(_ssl);
-	result = SSL_connect(_ssl);
-	if(result != 1)
-		closeAndThrowSsl("Failed to perform SSL connection initialization");
+	addrinfo hints;
+	addrinfo * address;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+	std::string portString = std::to_string(port);
+	int result = getaddrinfo(host.c_str(), portString.c_str(), &hints, &address);
+	try
+	{
+		hostent * hostEntity = gethostbyname(host.c_str());
+		if(hostEntity == nullptr)
+			closeAndThrow("Failed to resolve host name");
+		_socket = socket(address->ai_family, address->ai_socktype, address->ai_protocol);
+		if(_socket == invalidSocket)
+			closeAndThrowErrno("Failed to create socket");
+		result = ::connect(_socket, address->ai_addr, address->ai_addrlen);
+		if(result == -1)
+			closeAndThrowErrno("Failed to connect to server");
+		createSslContext(certificatePath);
+		SSL_set_connect_state(_ssl);
+		result = SSL_connect(_ssl);
+		if(result != 1)
+			closeAndThrowSsl("Failed to perform SSL connection initialization");
+	}
+	catch(...)
+	{
+		freeaddrinfo(address);
+		throw;
+	}
 }
 
 void SslSocket::bindAndListen(uint16_t port, const std::string & certificatePath)
@@ -130,23 +147,6 @@ void SslSocket::checkSocket()
 {
 	if(_socket == invalidSocket)
 		throw Fall::Exception("Socket has not been initialized");
-}
-
-void SslSocket::createSocket()
-{
-	_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if(_socket == invalidSocket)
-		closeAndThrowErrno("Failed to create socket");
-}
-
-sockaddr_in SslSocket::getAddress(unsigned long address, uint16_t port)
-{
-	sockaddr_in output;
-	output.sin_family = AF_INET;
-	output.sin_addr.s_addr = address;
-	output.sin_port = htons(port);
-	memset(&(output.sin_zero), 0, sizeof(output.sin_zero));
-	return output;
 }
 
 void SslSocket::createSslContext(const std::string & certificatePath)

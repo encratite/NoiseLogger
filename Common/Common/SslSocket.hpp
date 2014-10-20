@@ -32,8 +32,6 @@ private:
 	
 	void initializeSsl();
 	void checkSocket();
-	void createSocket();
-	sockaddr_in getAddress(unsigned long address, uint16_t port);
 	void createSslContext(const std::string & certificatePath);
 	
 	void closeAndThrow(const std::string & message);

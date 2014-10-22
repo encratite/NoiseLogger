@@ -1,0 +1,1 @@
+bash BuildCommon.sh && bash BuildClient.sh

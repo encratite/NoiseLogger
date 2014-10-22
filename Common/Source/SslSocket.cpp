@@ -19,8 +19,11 @@ namespace
 	bool sslHasBeenInitialized = false;
 	
 	const int invalidSocket = -1;
-	
-	const std::size_t defaultBufferSize = 4 * 1024;
+}
+
+SslSocket::~SslSocket()
+{
+	close();
 }
 
 SslSocket::SslSocket():
@@ -28,56 +31,6 @@ SslSocket::SslSocket():
 	_sslContext(nullptr)
 {
 	initializeSsl();
-}
-
-SslSocket::~SslSocket()
-{
-	close();
-}
-	
-void SslSocket::connect(const std::string & host, uint16_t port, const std::string & certificatePath)
-{
-	if(_socket != invalidSocket)
-		throw Fall::Exception("Unable to connect because the socket is already in use");
-	close();
-	addrinfo hints;
-	addrinfo * address;
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
-	std::string portString = std::to_string(port);
-	int result = getaddrinfo(host.c_str(), portString.c_str(), &hints, &address);
-	try
-	{
-		hostent * hostEntity = gethostbyname(host.c_str());
-		if(hostEntity == nullptr)
-			closeAndThrow("Failed to resolve host name");
-		_socket = socket(address->ai_family, address->ai_socktype, address->ai_protocol);
-		if(_socket == invalidSocket)
-			closeAndThrowErrno("Failed to create socket");
-		result = ::connect(_socket, address->ai_addr, address->ai_addrlen);
-		if(result == -1)
-			closeAndThrowErrno("Failed to connect to server");
-		createSslContext(certificatePath);
-		SSL_set_connect_state(_ssl);
-		result = SSL_connect(_ssl);
-		if(result != 1)
-			closeAndThrowSsl("Failed to perform SSL connection initialization");
-	}
-	catch(...)
-	{
-		freeaddrinfo(address);
-		throw;
-	}
-}
-
-void SslSocket::bindAndListen(uint16_t port, const std::string & certificatePath)
-{
-	if(_socket != invalidSocket)
-		throw Fall::Exception("Unable to bind socket because it is already in use");
-	close();
-	throw Fall::Exception("Not implemented");
 }
 
 void SslSocket::close()
@@ -92,44 +45,11 @@ void SslSocket::close()
 		SSL_CTX_free(_sslContext);
 		_sslContext = nullptr;
 	}
-	if(_socket != invalidSocket)
+	if(!isInvalidSocket())
 	{
 		::close(_socket);
 		_socket = invalidSocket;
 	}
-}
-	
-std::size_t SslSocket::read(void * buffer, std::size_t bufferSize)
-{
-	checkSocket();
-	ssize_t bytesRead = recv(_socket, buffer, bufferSize, 0);
-	if(bytesRead == -1)
-		closeAndThrowErrno("Failed to read from socket");
-	else if(bytesRead == 0)
-		closeAndThrow("Failed to read from socket because the connection has been closed");
-	return bytesRead;
-}
-
-void SslSocket::read(ByteBuffer & buffer)
-{
-	buffer.resize(defaultBufferSize);
-	std::size_t bytesRead = read(buffer.data(), buffer.size());
-	buffer.resize(bytesRead);
-}
-
-void SslSocket::write(const void * buffer, std::size_t size)
-{
-	checkSocket();
-	ssize_t bytesSent = send(_socket, buffer, size, 0);
-	if(bytesSent == -1)
-		closeAndThrowErrno("Failed to write to socket");
-	else if(bytesSent < static_cast<ssize_t>(size))
-		closeAndThrow("Failed to write to socket because the connection has been closed");
-}
-
-void SslSocket::write(const ByteBuffer & buffer)
-{
-	write(buffer.data(), buffer.size());
 }
 
 void SslSocket::initializeSsl()
@@ -143,15 +63,16 @@ void SslSocket::initializeSsl()
 	}
 }
 
-void SslSocket::checkSocket()
+void SslSocket::createSocket(const addrinfo & addressInfo)
 {
-	if(_socket == invalidSocket)
-		throw Fall::Exception("Socket has not been initialized");
+	_socket = socket(addressInfo.ai_family, addressInfo.ai_socktype, addressInfo.ai_protocol);
+	if(isInvalidSocket())
+		closeAndThrowErrno("Failed to create socket");
 }
 
-void SslSocket::createSslContext(const std::string & certificatePath)
+void SslSocket::createSslContext(bool isClient, const std::string & certificatePath)
 {
-	auto method = TLSv1_1_client_method();
+	auto method = isClient ? TLSv1_1_client_method() : TLSv1_1_server_method();
 	_sslContext = SSL_CTX_new(method);
 	if(_sslContext == nullptr)
 		closeAndThrow("Failed to create SSL context");
@@ -162,12 +83,26 @@ void SslSocket::createSslContext(const std::string & certificatePath)
 	result = SSL_CTX_use_PrivateKey_file(_sslContext, certificatePath.c_str(), SSL_FILETYPE_PEM);
 	if(result != 1)
 		closeAndThrowSsl("Unable to load private key file");
+	result = SSL_CTX_check_private_key(_sslContext);
+	if(result != 1)
+		closeAndThrowSsl("Private key does not match certificate");
 	_ssl = SSL_new(_sslContext);
 	if(_ssl == nullptr)
 		closeAndThrow("Failed to create SSL structure");
 	result = SSL_set_fd(_ssl, _socket);
-	if(result == 0)
+	if(result != 1)
 		closeAndThrow("Failed to set SSL file descriptor");
+}
+
+void SslSocket::checkSocket()
+{
+	if(isInvalidSocket())
+		throw Fall::Exception("Socket has not been initialized");
+}
+
+bool SslSocket::isInvalidSocket()
+{
+	return _socket == invalidSocket;
 }
 
 void SslSocket::closeAndThrow(const std::string & message)

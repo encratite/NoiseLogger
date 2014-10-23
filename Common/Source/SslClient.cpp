@@ -56,9 +56,10 @@ void SslClient::write(const ByteBuffer & buffer)
 	write(buffer.data(), buffer.size());
 }
 
-void SslClient::setClientSocket(int socket, const std::string & certificatePath)
+void SslClient::setClientData(int socket, SSL_CTX * sslContext)
 {
 	close();
 	_socket = socket;
-	createSslContext(true, certificatePath);
+	_sslContext = sslContext;
+	createSslStructure();
 }

@@ -1,6 +1,12 @@
 #pragma once
 
+#include <memory>
+
 #include <Common/SslSocket.hpp>
+
+class SslClient;
+
+typedef std::shared_ptr<SslClient> SslClientPointer;
 
 class SslClient: public SslSocket
 {
@@ -13,5 +19,5 @@ public:
 	void write(const void * buffer, std::size_t size);
 	void write(const ByteBuffer & buffer);
 	
-	void setClientSocket(int socket, const std::string & certificatePath);
+	void setClientData(int socket, SSL_CTX * sslContext);
 };

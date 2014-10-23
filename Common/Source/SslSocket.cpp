@@ -28,7 +28,8 @@ SslSocket::~SslSocket()
 
 SslSocket::SslSocket():
 	_socket(invalidSocket),
-	_sslContext(nullptr)
+	_sslContext(nullptr),
+	_ownsContext(false)
 {
 	initializeSsl();
 }
@@ -40,7 +41,7 @@ void SslSocket::close()
 		SSL_free(_ssl);
 		_ssl = nullptr;
 	}
-	if(_sslContext != nullptr)
+	if(_ownsContext && _sslContext != nullptr)
 	{
 		SSL_CTX_free(_sslContext);
 		_sslContext = nullptr;
@@ -76,8 +77,9 @@ void SslSocket::createSslContext(bool isClient, const std::string & certificateP
 	_sslContext = SSL_CTX_new(method);
 	if(_sslContext == nullptr)
 		closeAndThrow("Failed to create SSL context");
+	_ownsContext = true;
 	SSL_CTX_set_verify(_sslContext, SSL_VERIFY_PEER, nullptr);
-	int result = SSL_CTX_use_certificate_file(_sslContext, certificatePath.c_str(), SSL_FILETYPE_PEM);
+	int result = SSL_CTX_use_certificate_chain_file(_sslContext, certificatePath.c_str());
 	if(result != 1)
 		closeAndThrowSsl("Unable to load certificate file");
 	result = SSL_CTX_use_PrivateKey_file(_sslContext, certificatePath.c_str(), SSL_FILETYPE_PEM);
@@ -86,6 +88,11 @@ void SslSocket::createSslContext(bool isClient, const std::string & certificateP
 	result = SSL_CTX_check_private_key(_sslContext);
 	if(result != 1)
 		closeAndThrowSsl("Private key does not match certificate");
+	createSslStructure();
+}
+
+void SslSocket::createSslStructure()
+{
 	_ssl = SSL_new(_sslContext);
 	if(_ssl == nullptr)
 		closeAndThrow("Failed to create SSL structure");

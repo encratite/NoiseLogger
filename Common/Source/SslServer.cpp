@@ -1,6 +1,16 @@
 #include <Common/SslServer.hpp>
 
-void SslServer::bindAndListen(uint16_t port, const std::string & certificatePath)
+SslServer::SslServer():
+	_running(false)
+{
+}
+
+SslServer::~SslServer()
+{
+	_running = false;
+}
+
+void SslServer::run(uint16_t port, const std::string & certificatePath)
 {
 	if(!isInvalidSocket())
 		throw Fall::Exception("Unable to bind socket because it is already in use");
@@ -16,4 +26,31 @@ void SslServer::bindAndListen(uint16_t port, const std::string & certificatePath
 		closeAndThrowErrno("Failed to listen for connections");
 	createSslContext(false, certificatePath);
 	SSL_set_accept_state(_ssl);
+	_running = true;
+	while(_running)
+	{
+		sockaddr_storage clientAddress;
+		socklen_t clientAddressSize = sizeof(clientAddress);
+		int clientSocket = accept(_socket, reinterpret_cast<sockaddr *>(&clientAddress), &clientAddressSize);
+		if(clientSocket < 0)
+		{
+			if(!_running)
+				break;
+			closeAndThrowErrno("Failed to accept connection");
+		}
+		SslClientPointer client(new client);
+		client->setClientData(clientSocket);
+		int result = SSL_accept(client._ssl);
+		if(result != 1)
+		{
+			continue;
+		}
+		onClient(client);
+	}
+}
+
+void SslServer::stop()
+{
+	_running = false;
+	close();
 }

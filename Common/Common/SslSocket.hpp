@@ -19,6 +19,7 @@ protected:
 	int _socket;
 	SSL_CTX * _sslContext;
 	SSL * _ssl;
+	bool _ownsContext;
 	
 	SslSocket();
 	
@@ -27,6 +28,7 @@ protected:
 	void initializeSsl();
 	void createSocket(const addrinfo & addressInfo);
 	void createSslContext(bool isClient, const std::string & certificatePath);
+	void createSslStructure();
 	
 	void checkSocket();
 	bool isInvalidSocket();

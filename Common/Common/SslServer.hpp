@@ -1,9 +1,19 @@
 #pragma once
 
 #include <Common/SslSocket.hpp>
+#include <Common/SslClient.hpp>
 
 class SslServer: public SslSocket
 {
 public:
-	void bindAndListen(uint16_t port, const std::string & certificatePath);
+	SslServer();
+	~SslServer();
+
+	void run(uint16_t port, const std::string & certificatePath);
+	void stop();
+
+	virtual void onClient(const SslClientPointer & client) = 0;
+
+private:
+	bool _running;
 };

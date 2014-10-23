@@ -63,3 +63,8 @@ void SslClient::setClientData(int socket, SSL_CTX * sslContext)
 	_sslContext = sslContext;
 	createSslStructure();
 }
+
+SSL * SslClient::getSslStructure()
+{
+	return _ssl;
+}

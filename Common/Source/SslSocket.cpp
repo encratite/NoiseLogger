@@ -96,7 +96,7 @@ void SslSocket::createSslStructure()
 	_ssl = SSL_new(_sslContext);
 	if(_ssl == nullptr)
 		closeAndThrow("Failed to create SSL structure");
-	result = SSL_set_fd(_ssl, _socket);
+	int result = SSL_set_fd(_ssl, _socket);
 	if(result != 1)
 		closeAndThrow("Failed to set SSL file descriptor");
 }

@@ -20,4 +20,5 @@ public:
 	void write(const ByteBuffer & buffer);
 	
 	void setClientData(int socket, SSL_CTX * sslContext);
+	SSL * getSslStructure();
 };

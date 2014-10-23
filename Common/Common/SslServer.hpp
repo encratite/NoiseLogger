@@ -12,7 +12,7 @@ public:
 	void run(uint16_t port, const std::string & certificatePath);
 	void stop();
 
-	virtual void onClient(const SslClientPointer & client) = 0;
+	virtual void onNewClient(const SslClientPointer & client) = 0;
 
 private:
 	bool _running;

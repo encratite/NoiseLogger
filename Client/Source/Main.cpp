@@ -3,18 +3,18 @@
 #include <Fall/Configuration.hpp>
 #include <Fall/Exception.hpp>
 
-#include <Client/NoiseLogger.hpp>
-#include <Client/NoiseLoggerConfiguration.hpp>
+#include <Client/NoiseLoggerClient.hpp>
+#include <Client/ClientConfiguration.hpp>
 
 namespace
 {
-	const std::string configurationPath("NoiseLogger.conf");
+	const std::string configurationPath("NoiseLoggerClient.conf");
 }
 
-void runNoiseLogger()
+void runClient()
 {
 	Fall::Configuration configuration(configurationPath);
-	NoiseLoggerConfiguration loggerConfiguration;
+	ClientConfiguration loggerConfiguration;
 	loggerConfiguration.deviceName = configuration.getString("deviceName", "default");
 	loggerConfiguration.sampleRate = configuration.getNumber<unsigned>("sampleRate", 11025);
 	loggerConfiguration.latency = configuration.getNumber<unsigned>("latency", 100);
@@ -22,19 +22,19 @@ void runNoiseLogger()
 	loggerConfiguration.samplesPerPacket = configuration.getNumber<std::size_t>("samplesPerPacket", 600);
 	loggerConfiguration.maximumPacketQueueSize = configuration.getNumber<std::size_t>("maximumPacketQueueSize", 10);
 	loggerConfiguration.compressionLevel = configuration.getNumber<uint32_t>("compressionLevel", 6);
-	loggerConfiguration.logServerHost = configuration.getString("logServerHost");
-	loggerConfiguration.logServerPort = configuration.getNumber<uint16_t>("logServerPort");
-	loggerConfiguration.clientCertificatePath = configuration.getString("clientCertificatePath");
+	loggerConfiguration.serverHost = configuration.getString("serverHost");
+	loggerConfiguration.serverPort = configuration.getNumber<uint16_t>("serverPort");
+	loggerConfiguration.certificatePath = configuration.getString("certificatePath");
 	loggerConfiguration.reconnectDelay = configuration.getNumber<unsigned>("reconnectDelay", 10);
-	NoiseLogger logger(loggerConfiguration);
+	NoiseLoggerClient logger(loggerConfiguration);
 	logger.run();
 }
 
-int main(int argc, char * * argv)
+int main(int argc, char ** argv)
 {
 	try
 	{
-		runNoiseLogger();
+		runClient();
 	}
 	catch(const Fall::Exception & exception)
 	{

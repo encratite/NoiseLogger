@@ -10,7 +10,7 @@
 
 #include <Client/AlsaPcm.hpp>
 #include <Client/LogSample.hpp>
-#include <Client/NoiseLoggerConfiguration.hpp>
+#include <Client/ClientConfiguration.hpp>
 #include <Common/SslClient.hpp>
 
 typedef int16_t SampleType;
@@ -25,16 +25,16 @@ enum NoiseLoggerState
 	NoiseLoggerStateTerminating
 };
 
-class NoiseLogger
+class NoiseLoggerClient
 {
 public:
-	NoiseLogger(const NoiseLoggerConfiguration & configuration);
-	~NoiseLogger();
+	NoiseLoggerClient(const ClientConfiguration & configuration);
+	~NoiseLoggerClient();
 	
 	void run();
 	
 private:
-	NoiseLoggerConfiguration _configuration;
+	ClientConfiguration _configuration;
 	NoiseLoggerState _state;
 	AlsaPcm<SampleType> _pcm;
 	LogSamples _logSamples;

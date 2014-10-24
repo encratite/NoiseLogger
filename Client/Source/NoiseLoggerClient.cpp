@@ -4,38 +4,38 @@
 #include <iomanip>
 #include <chrono>
 
-#include <Client/NoiseLogger.hpp>
-#include <Client/NoiseLoggerConfiguration.hpp>
+#include <Client/NoiseLoggerClient.hpp>
+#include <Client/ClientConfiguration.hpp>
 #include <Common/Compression.hpp>
 #include <Common/Debug.hpp>
 #include <Common/LogPacket.hpp>
 #include <Common/Serialization.hpp>
 
-NoiseLogger::NoiseLogger(const NoiseLoggerConfiguration & configuration):
+NoiseLoggerClient::NoiseLoggerClient(const ClientConfiguration & configuration):
 	_configuration(configuration),
 	_state(NoiseLoggerStateIdle),
 	_pcm(configuration.deviceName, SND_PCM_FORMAT_S16, configuration.sampleRate, configuration.latency, configuration.readInterval)
 {
 }
 
-NoiseLogger::~NoiseLogger()
+NoiseLoggerClient::~NoiseLoggerClient()
 {
 	_state = NoiseLoggerStateTerminating;
 	_communicationThread.join();
 }
 
-void NoiseLogger::run()
+void NoiseLoggerClient::run()
 {
 	if(_state != NoiseLoggerStateIdle)
 		throw Fall::Exception("Unable to start logger");
 	_state = NoiseLoggerStateRunning;
 	_pcm.open();
-	_communicationThread = std::thread(&NoiseLogger::communicate, this);
+	_communicationThread = std::thread(&NoiseLoggerClient::communicate, this);
 	while(_state == NoiseLoggerStateRunning)
 		readSamples();
 }
 
-void NoiseLogger::readSamples()
+void NoiseLoggerClient::readSamples()
 {
 	_pcm.read();
 	const auto & buffer = _pcm.getBuffer();
@@ -55,7 +55,7 @@ void NoiseLogger::readSamples()
 	}
 }
 
-void NoiseLogger::pushPacket()
+void NoiseLoggerClient::pushPacket()
 {
 	Lock lock(_packetQueueMutex);
 	_packetQueue.push(_logSamples);
@@ -64,7 +64,7 @@ void NoiseLogger::pushPacket()
 	_packetAvailable.notify_one();
 }
 
-void NoiseLogger::popPacket(LogSamples & logSamples)
+void NoiseLoggerClient::popPacket(LogSamples & logSamples)
 {
 	Lock lock(_packetQueueMutex);
 	if(_packetQueue.empty())
@@ -75,7 +75,7 @@ void NoiseLogger::popPacket(LogSamples & logSamples)
 	_packetQueue.pop();
 }
 
-void NoiseLogger::communicate()
+void NoiseLoggerClient::communicate()
 {
 	while(_state == NoiseLoggerStateRunning)
 	{
@@ -90,12 +90,12 @@ void NoiseLogger::communicate()
 	}
 }
 
-bool NoiseLogger::connect()
+bool NoiseLoggerClient::connect()
 {
 	try
 	{
 		if(!_sslClient.isConnected())
-			_sslClient.connect(_configuration.logServerHost, _configuration.logServerPort, _configuration.clientCertificatePath);
+			_sslClient.connect(_configuration.serverHost, _configuration.serverPort, _configuration.certificatePath);
 		return true;
 	}
 	catch(const Fall::Exception & exception)
@@ -112,7 +112,7 @@ bool NoiseLogger::connect()
 	}
 }
 
-void NoiseLogger::sendPacket(const LogSamples & logSamples)
+void NoiseLoggerClient::sendPacket(const LogSamples & logSamples)
 {
 	const LogSample & firstSample = logSamples.front();
 	std::vector<uint16_t> samples;

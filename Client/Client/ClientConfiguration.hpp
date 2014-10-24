@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-struct NoiseLoggerConfiguration
+struct ClientConfiguration
 {
 	// An ALSA device string such as "hw:1,0"
 	std::string deviceName;
@@ -21,11 +21,11 @@ struct NoiseLoggerConfiguration
 	// The LZMA compression level (0-9)
 	uint32_t compressionLevel;
 	// The host of the log server
-	std::string logServerHost;
+	std::string serverHost;
 	// The TCP port of the log server
-	uint16_t logServerPort;
-	// The path to the X.509 client certificate to be used for TLS authentication with the log server
-	std::string clientCertificatePath;
+	uint16_t serverPort;
+	// Path to the client certificate chain/private key
+	std::string certificatePath;
 	// Delay between attempts to reconnect (seconds)
 	unsigned reconnectDelay;
 };

@@ -45,7 +45,8 @@ void SslServer::run(uint16_t port, const std::string & certificatePath)
 		{
 			continue;
 		}
-		onNewClient(client);
+		if(onNewClient != nullptr)
+			onNewClient(client);
 	}
 }
 

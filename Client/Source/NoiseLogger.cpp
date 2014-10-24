@@ -79,11 +79,36 @@ void NoiseLogger::communicate()
 {
 	while(_state == NoiseLoggerStateRunning)
 	{
+		bool connected = connect();
+		if(!connected)
+			continue;
 		LogSamples logSamples;
 		popPacket(logSamples);
 		if(logSamples.empty())
 			continue;
 		sendPacket(logSamples);
+	}
+}
+
+bool NoiseLogger::connect()
+{
+	try
+	{
+		if(!_sslClient.isConnected())
+			_sslClient.connect(_configuration.logServerHost, _configuration.logServerPort, _configuration.clientCertificatePath);
+		return true;
+	}
+	catch(const Fall::Exception & exception)
+	{
+		std::cout << exception.getMessage() << std::endl;
+		if(_state == NoiseLoggerStateRunning)
+		{
+			unsigned delay = _configuration.reconnectDelay;
+			std::cout << "Trying again in " << delay << " second(s)" << std::endl;
+			std::chrono::seconds duration(delay);
+			std::this_thread::sleep_for(duration);
+		}
+		return false;
 	}
 }
 
@@ -98,4 +123,12 @@ void NoiseLogger::sendPacket(const LogSamples & logSamples)
 	packet.serialize(serializedData);
 	ByteBuffer compressedData;
 	lzmaCompress(serializedData, compressedData, _configuration.compressionLevel);
+	try
+	{
+		_sslClient.write(compressedData);
+	}
+	catch(const Fall::Exception & exception)
+	{
+		std::cout << exception.getMessage() << std::endl;
+	}
 }

@@ -25,6 +25,7 @@ void runNoiseLogger()
 	loggerConfiguration.logServerHost = configuration.getString("logServerHost");
 	loggerConfiguration.logServerPort = configuration.getNumber<uint16_t>("logServerPort");
 	loggerConfiguration.clientCertificatePath = configuration.getString("clientCertificatePath");
+	loggerConfiguration.reconnectDelay = configuration.getNumber<unsigned>("reconnectDelay", 10);
 	NoiseLogger logger(loggerConfiguration);
 	logger.run();
 }

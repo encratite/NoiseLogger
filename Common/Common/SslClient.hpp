@@ -19,6 +19,8 @@ public:
 	void write(const void * buffer, std::size_t size);
 	void write(const ByteBuffer & buffer);
 	
+	bool isConnected();
+	
 	void setClientData(int socket, SSL_CTX * sslContext);
 	SSL * getSslStructure();
 };

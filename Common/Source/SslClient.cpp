@@ -56,6 +56,11 @@ void SslClient::write(const ByteBuffer & buffer)
 	write(buffer.data(), buffer.size());
 }
 
+bool SslClient::isConnected()
+{
+	return !isInvalidSocket();
+}
+
 void SslClient::setClientData(int socket, SSL_CTX * sslContext)
 {
 	close();

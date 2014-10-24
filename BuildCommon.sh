@@ -13,8 +13,9 @@ for sourceFile in $sourceFiles
 do
 	outputFile=$(basename $sourceFile | cut -d. -f1).o
 	object=$objectDirectory/$outputFile
-	echo Building $sourceFile
-	$compiler -std=c++11 -static -g -Wall $includes -c $sourceFile -o $object
+	commandLine="$compiler -std=c++11 -static -g -Wall $includes -c $sourceFile -o $object"
+	echo $commandLine
+	$commandLine
 	if [[ $? != 0 ]]
 	then
 		exit 1
@@ -23,6 +24,6 @@ do
 done
 
 outputPath=$outputDirectory/lib$output.a
-echo Building $outputPath
-
-ar rcs $outputPath$objects
+commandLine="ar rcs $outputPath$objects"
+echo $commandLine
+$commandLine

@@ -26,4 +26,6 @@ struct NoiseLoggerConfiguration
 	uint16_t logServerPort;
 	// The path to the X.509 client certificate to be used for TLS authentication with the log server
 	std::string clientCertificatePath;
+	// Delay between attempts to reconnect (seconds)
+	unsigned reconnectDelay;
 };

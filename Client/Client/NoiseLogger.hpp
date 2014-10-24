@@ -11,6 +11,7 @@
 #include <Client/AlsaPcm.hpp>
 #include <Client/LogSample.hpp>
 #include <Client/NoiseLoggerConfiguration.hpp>
+#include <Common/SslClient.hpp>
 
 typedef int16_t SampleType;
 typedef std::vector<LogSample> LogSamples;
@@ -41,10 +42,12 @@ private:
 	std::mutex _packetQueueMutex;
 	std::condition_variable _packetAvailable;
 	PacketQueue _packetQueue;
+	SslClient _sslClient;
 	
 	void readSamples();
 	void pushPacket();
 	void popPacket(LogSamples & logSamples);
 	void communicate();
+	bool connect();
 	void sendPacket(const LogSamples & logSamples);
 };

@@ -14,5 +14,5 @@ private:
 	ServerConfiguration _configuration;
 	SslServer _sslServer;
 	
-	void onNewClient(const SslClientPointer & client);
+	void onNewClient(SslClientPointer client);
 };

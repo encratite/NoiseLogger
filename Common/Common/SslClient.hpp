@@ -21,6 +21,8 @@ public:
 	
 	bool isConnected();
 	
+	std::string getAddress();
+	
 	void setClientData(int socket, SSL_CTX * sslContext);
 	SSL * getSslStructure();
 };

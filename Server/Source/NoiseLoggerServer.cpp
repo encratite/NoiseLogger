@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <Server/NoiseLoggerServer.hpp>
 
 NoiseLoggerServer::NoiseLoggerServer(const ServerConfiguration & configuration):
@@ -11,6 +13,14 @@ void NoiseLoggerServer::run()
 	_sslServer.run(_configuration.serverPort, _configuration.certificatePath);
 }
 
-void NoiseLoggerServer::onNewClient(const SslClientPointer & client)
+void NoiseLoggerServer::onNewClient(SslClientPointer client)
 {
+	try
+	{
+		std::cout << "Client connected: " << client->getAddress() << std::endl;
+	}
+	catch(const std::exception & exception)
+	{
+		std::cout << "Client error: " << exception.what() << std::endl;
+	}
 }

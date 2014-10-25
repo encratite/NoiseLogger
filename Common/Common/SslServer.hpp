@@ -1,11 +1,14 @@
 #pragma once
 
 #include <functional>
+#include <future>
+#include <list>
 
 #include <Common/SslSocket.hpp>
 #include <Common/SslClient.hpp>
 
-typedef std::function<void (const SslClientPointer & client)> OnNewClientEvent;
+typedef std::function<void (SslClientPointer client)> OnNewClientEvent;
+typedef std::future<void> ClientFuture;
 
 class SslServer: public SslSocket
 {
@@ -20,4 +23,7 @@ public:
 
 private:
 	bool _running;
+	std::list<ClientFuture> _clientThreads;
+
+	void cleanUpThreads();
 };

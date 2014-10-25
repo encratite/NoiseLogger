@@ -1,3 +1,6 @@
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
 #include <Common/SslClient.hpp>
 
 namespace
@@ -59,6 +62,30 @@ void SslClient::write(const ByteBuffer & buffer)
 bool SslClient::isConnected()
 {
 	return !isInvalidSocket();
+}
+
+std::string SslClient::getAddress()
+{
+	sockaddr_storage addressStorage;
+	socklen_t length = sizeof(addressStorage);
+	int result = getpeername(_socket, reinterpret_cast<sockaddr *>(&addressStorage), &length);
+	if(result != 0)
+		closeAndThrowErrno("Failed to retrieve peer name");
+	char buffer[INET6_ADDRSTRLEN];
+	void * source;
+	if(addressStorage.ss_family == AF_INET)
+	{
+		sockaddr_in * address = reinterpret_cast<sockaddr_in *>(&addressStorage);
+		source = &address->sin_addr;
+	}
+	else
+	{
+		sockaddr_in6 * address = reinterpret_cast<sockaddr_in6 *>(&addressStorage);
+		source = &address->sin6_addr;
+	}
+	inet_ntop(addressStorage.ss_family, source, buffer, sizeof(buffer));
+	std::string output(buffer);
+	return buffer;
 }
 
 void SslClient::setClientData(int socket, SSL_CTX * sslContext)

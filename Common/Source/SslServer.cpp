@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include <Common/SslServer.hpp>
 
 SslServer::SslServer():
@@ -8,6 +10,9 @@ SslServer::SslServer():
 SslServer::~SslServer()
 {
 	_running = false;
+	close();
+	for(ClientFuture & future : _clientThreads)
+		future.wait();
 }
 
 void SslServer::run(uint16_t port, const std::string & certificatePath)
@@ -46,7 +51,11 @@ void SslServer::run(uint16_t port, const std::string & certificatePath)
 			continue;
 		}
 		if(onNewClient != nullptr)
-			onNewClient(client);
+		{
+			ClientFuture future = std::async(std::launch::async, [&]() { onNewClient(client); });
+			_clientThreads.push_back(std::move(future));
+		}
+		cleanUpThreads();
 	}
 }
 
@@ -54,4 +63,17 @@ void SslServer::stop()
 {
 	_running = false;
 	close();
+}
+
+void SslServer::cleanUpThreads()
+{
+	std::chrono::seconds duration(0);
+	for(auto i = _clientThreads.begin(); i != _clientThreads.end();)
+	{
+		std::future_status status = i->wait_for(duration);
+		if(status == std::future_status::ready)
+			i = _clientThreads.erase(i);
+		else
+			i++;
+	}
 }

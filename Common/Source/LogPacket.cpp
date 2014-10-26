@@ -1,16 +1,15 @@
 #include <Common/LogPacket.hpp>
 #include <Common/Serialization.hpp>
 
+LogPacket::LogPacket()
+{
+}
+
 LogPacket::LogPacket(uint64_t initialTimestamp, uint16_t interval, const std::vector<uint16_t> & samples) :
 	initialTimestamp(initialTimestamp),
 	interval(interval),
 	samples(samples)
 {
-}
-
-LogPacket::LogPacket(const ByteBuffer & buffer)
-{
-	deserialize(buffer);
 }
 
 void LogPacket::serialize(ByteBuffer & buffer)

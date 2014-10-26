@@ -31,3 +31,8 @@ void lzmaCompress(const ByteBuffer & input, ByteBuffer & output, uint32_t compre
 		throw;
 	}
 }
+
+void lzmaDecompress(const ByteBuffer & input, ByteBuffer & output)
+{
+	throw Fall::Exception("Not implemented");
+}

@@ -14,8 +14,8 @@ struct LogPacket
 	// Root mean square samples
 	std::vector<uint16_t> samples;
 	
+	LogPacket();
 	LogPacket(uint64_t initialTimestamp, uint16_t interval, const std::vector<uint16_t> & samples);
-	LogPacket(const ByteBuffer & buffer);
 	
 	void serialize(ByteBuffer & buffer);
 	void deserialize(const ByteBuffer & buffer);

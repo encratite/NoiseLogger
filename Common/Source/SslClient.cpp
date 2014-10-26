@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
@@ -39,9 +41,11 @@ std::size_t SslClient::read(void * buffer, std::size_t bufferSize)
 
 void SslClient::read(ByteBuffer & buffer)
 {
-	buffer.resize(defaultBufferSize);
-	std::size_t bytesRead = read(buffer.data(), buffer.size());
-	buffer.resize(bytesRead);
+	uint8_t readBuffer[defaultBufferSize];
+	std::size_t bytesRead = read(&readBuffer, sizeof(readBuffer));
+	std::size_t bufferSize = buffer.size();
+	buffer.resize(bufferSize + bytesRead);
+	std::memcpy(&readBuffer, buffer.data() + bufferSize, bytesRead);
 }
 
 void SslClient::write(const void * buffer, std::size_t size)

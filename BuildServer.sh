@@ -3,7 +3,7 @@ sourceFiles=Server/Source/*.cpp
 objectDirectory=Server/Object
 outputDirectory=Output
 includes="-I../Fall -IServer -ICommon"
-libraries="-L../Fall/Output -lFall -LOutput -lNoiseLoggerCommon -llzma -lssl -lcrypto"
+libraries="-L../Fall/Output -lFall -LOutput -lNoiseLoggerCommon -llzma -lssl -lcrypto -lpq"
 compiler=g++
 
 mkdir -p $objectDirectory

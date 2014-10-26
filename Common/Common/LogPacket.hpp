@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <vector>
 
+#include <Common/Types.hpp>
+
 struct LogPacket
 {
 	// UNIX milliseconds UTC timestamp
@@ -13,6 +15,8 @@ struct LogPacket
 	std::vector<uint16_t> samples;
 	
 	LogPacket(uint64_t initialTimestamp, uint16_t interval, const std::vector<uint16_t> & samples);
+	LogPacket(const ByteBuffer & buffer);
 	
-	void serialize(std::vector<uint8_t> & buffer);
+	void serialize(ByteBuffer & buffer);
+	void deserialize(const ByteBuffer & buffer);
 };

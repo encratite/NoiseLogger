@@ -45,7 +45,7 @@ void SslClient::read(ByteBuffer & buffer)
 	std::size_t bytesRead = read(&readBuffer, sizeof(readBuffer));
 	std::size_t bufferSize = buffer.size();
 	buffer.resize(bufferSize + bytesRead);
-	std::memcpy(&readBuffer, buffer.data() + bufferSize, bytesRead);
+	std::memcpy(buffer.data() + bufferSize, &readBuffer, bytesRead);
 }
 
 void SslClient::write(const void * buffer, std::size_t size)

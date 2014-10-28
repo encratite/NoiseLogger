@@ -1,12 +1,13 @@
 #include <iostream>
 
+#include <endian.h>
+
 #include <Fall/Console.hpp>
 #include <Fall/Time.hpp>
 
 #include <Common/LogPacket.hpp>
 #include <Common/Serialization.hpp>
 #include <Server/NoiseLoggerServer.hpp>
-#include <Server/NoiseLoggerServerClient.hpp>
 
 NoiseLoggerServer::NoiseLoggerServer(const ServerConfiguration & configuration):
 	_configuration(configuration),
@@ -41,12 +42,49 @@ void NoiseLoggerServer::onNewClient(SslClientPointer client)
 		{
 			LogPacket logPacket;
 			serverClient.readPacket(logPacket);
-			throw Fall::Exception("Not implemented");
+			storePacketInDatabase(logPacket, serverClient);
 		}
 	}
 	catch(const std::exception & exception)
 	{
 		Fall::log(std::string("Client error: ") + exception.what());
+	}
+}
+
+void NoiseLoggerServer::storePacketInDatabase(const LogPacket & logPacket, const NoiseLoggerServerClient & client)
+{
+	const char * query = "select insert_volume($1::timestamp, $2::integer, $3::text)";
+	const int parameterCount = 3;
+	const Oid * parameterTypes = nullptr;
+	int textFormat = 0;
+	int binaryFormat = 1;
+	uint64_t timestamp = logPacket.initialTimestamp;
+	const std::string & address = client.getAddress();
+	int parameterLengths[parameterCount] =
+	{
+		sizeof(uint64_t),
+		sizeof(uint16_t),
+		static_cast<int>(address.length())
+	};
+	int parameterFormats[parameterCount] =
+	{
+		binaryFormat,
+		binaryFormat,
+		textFormat
+	};
+	for(uint16_t sample : logPacket.samples)
+	{
+		uint64_t parameterTimestamp = htobe64(timestamp);
+		uint16_t parameterSample = htobe16(sample);
+		const char * parameterValues[parameterCount] =
+		{
+			reinterpret_cast<char *>(&parameterTimestamp),
+			reinterpret_cast<char *>(&parameterSample),
+			address.c_str()
+		};
+		PGresult * result = PQexecParams(_databaseConnection, query, parameterCount, parameterTypes, parameterValues, parameterLengths, parameterFormats, binaryFormat);
+		checkDatabaseResultStatus(result);
+		timestamp += logPacket.interval;
 	}
 }
 

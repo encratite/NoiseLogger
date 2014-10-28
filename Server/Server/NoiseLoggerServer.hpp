@@ -2,8 +2,10 @@
 
 #include <libpq-fe.h>
 
+#include <Common/LogPacket.hpp>
 #include <Common/SslServer.hpp>
 #include <Server/ServerConfiguration.hpp>
+#include <Server/NoiseLoggerServerClient.hpp>
 
 class NoiseLoggerServer
 {
@@ -19,6 +21,7 @@ private:
 	PGconn * _databaseConnection;
 	
 	void onNewClient(SslClientPointer client);
+	void storePacketInDatabase(const LogPacket & logPacket, const NoiseLoggerServerClient & client);
 	void checkDatabaseStatus();
 	void checkDatabaseResultStatus(PGresult * result);
 };

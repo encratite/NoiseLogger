@@ -13,6 +13,7 @@ public:
 	
 	void readPacket(LogPacket & logPacket);
 	void log(const std::string & text);
+	const std::string & getAddress() const;
 	
 private:
 	SslClientPointer _client;

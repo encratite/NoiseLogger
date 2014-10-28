@@ -46,6 +46,11 @@ void NoiseLoggerServerClient::log(const std::string & text)
 	Fall::log("[" + _address + "] " + text);
 }
 
+const std::string & NoiseLoggerServerClient::getAddress() const
+{
+	return _address;
+}
+
 void NoiseLoggerServerClient::read()
 {
 	_client->read(_buffer);

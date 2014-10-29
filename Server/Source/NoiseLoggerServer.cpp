@@ -31,31 +31,40 @@ void NoiseLoggerServer::run()
 {
 	_databaseConnection = PQconnectdb(_configuration.databaseConnectionString.c_str());
 	checkDatabaseStatus();
+	Fall::log("Running server on port " + std::to_string(_configuration.serverPort));
 	_sslServer.run(_configuration.serverPort, _configuration.certificatePath, _configuration.certificateAuthorityPath);
 }
 
 void NoiseLoggerServer::onNewClient(SslClientPointer client)
 {
+	DEBUG_MARK
 	try
 	{
+		DEBUG_MARK
 		NoiseLoggerServerClient serverClient(client);
+		DEBUG_MARK
 		serverClient.log("Client connected");
+		DEBUG_MARK
 		while(true)
 		{
 			LogPacket logPacket;
+			DEBUG_MARK
 			serverClient.readPacket(logPacket);
+			serverClient.log("Received packet from client");
 			storePacketInDatabase(logPacket, serverClient);
+			DEBUG_MARK
 		}
 	}
 	catch(const std::exception & exception)
 	{
 		Fall::log(std::string("Client error: ") + exception.what());
 	}
+	DEBUG_MARK
 }
 
 void NoiseLoggerServer::storePacketInDatabase(const LogPacket & logPacket, const NoiseLoggerServerClient & client)
 {
-	const char * query = "select insert_volume($1::timestamp, $2::integer, $3::text)";
+	const char * query = "select insert_volume($1::timestamp, $2::int4, $3::text)";
 	const int parameterCount = 3;
 	const Oid * parameterTypes = nullptr;
 	int textFormat = 0;
@@ -65,7 +74,7 @@ void NoiseLoggerServer::storePacketInDatabase(const LogPacket & logPacket, const
 	int parameterLengths[parameterCount] =
 	{
 		sizeof(uint64_t),
-		sizeof(uint16_t),
+		sizeof(uint32_t),
 		static_cast<int>(address.length())
 	};
 	int parameterFormats[parameterCount] =
@@ -77,7 +86,7 @@ void NoiseLoggerServer::storePacketInDatabase(const LogPacket & logPacket, const
 	for(uint16_t sample : logPacket.samples)
 	{
 		uint64_t parameterTimestamp = htobe64(timestamp);
-		uint16_t parameterSample = htobe16(sample);
+		uint32_t parameterSample = static_cast<uint32_t>(htobe16(sample));
 		const char * parameterValues[parameterCount] =
 		{
 			reinterpret_cast<char *>(&parameterTimestamp),

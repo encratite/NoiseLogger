@@ -1,3 +1,5 @@
+#include <Fall/Console.hpp>
+
 #include <Common/LogPacket.hpp>
 #include <Common/Serialization.hpp>
 
@@ -30,4 +32,7 @@ void LogPacket::deserialize(const ByteBuffer & buffer)
 		uint16_t sample = deserializeUInt16(buffer, offset);
 		samples.push_back(sample);
 	}
+	Fall::log("Timestamp: " + std::to_string(initialTimestamp));
+	Fall::log("Interval: " + std::to_string(interval));
+	Fall::log("Number of samples: " + std::to_string(samples.size()));
 }

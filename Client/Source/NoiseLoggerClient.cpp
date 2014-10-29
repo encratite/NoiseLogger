@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <chrono>
 
+#include <Fall/Console.hpp>
+
 #include <Client/NoiseLoggerClient.hpp>
 #include <Client/ClientConfiguration.hpp>
 #include <Common/Compression.hpp>
@@ -47,9 +49,10 @@ void NoiseLoggerClient::readSamples()
 	uint64_t unixMilliseconds = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
 	LogSample logSample(unixMilliseconds, rootMeanSquare);
 	_logSamples.push_back(logSample);
-	std::cout << unixMilliseconds << ": " << rootMeanSquare << " (" << _logSamples.size() << " sample(s))" << std::endl;
+	Fall::log(std::to_string(unixMilliseconds) + ": " + std::to_string(rootMeanSquare) + " (" + std::to_string(_logSamples.size()) + " sample(s))");
 	if(_logSamples.size() >= _configuration.samplesPerPacket)
 	{
+		Fall::log("Pushing packet");
 		pushPacket();
 		_logSamples.clear();
 	}
@@ -95,16 +98,20 @@ bool NoiseLoggerClient::connect()
 	try
 	{
 		if(!_sslClient.isConnected())
+		{
+			Fall::log("Connecting to server");
 			_sslClient.connect(_configuration.serverHost, _configuration.serverPort, _configuration.certificatePath, _configuration.certificateAuthorityPath);
+			Fall::log("Connected to server");
+		}
 		return true;
 	}
 	catch(const Fall::Exception & exception)
 	{
-		std::cout << exception.getMessage() << std::endl;
+		Fall::log(exception.getMessage());
 		if(_state == NoiseLoggerStateRunning)
 		{
 			unsigned delay = _configuration.reconnectDelay;
-			std::cout << "Trying again in " << delay << " second(s)" << std::endl;
+			Fall::log("Trying again in " + std::to_string(delay) + " second(s)");
 			std::chrono::seconds duration(delay);
 			std::this_thread::sleep_for(duration);
 		}
@@ -114,6 +121,7 @@ bool NoiseLoggerClient::connect()
 
 void NoiseLoggerClient::sendPacket(const LogSamples & logSamples)
 {
+	Fall::log("Sending packet to server");
 	const LogSample & firstSample = logSamples.front();
 	std::vector<uint16_t> samples;
 	for (const auto & logSample : logSamples)
@@ -123,12 +131,15 @@ void NoiseLoggerClient::sendPacket(const LogSamples & logSamples)
 	packet.serialize(serializedData);
 	ByteBuffer compressedData;
 	lzmaCompress(serializedData, compressedData, _configuration.compressionLevel);
+	ByteBuffer output;
+	serializeUInt16(compressedData.size(), output);
+	output.insert(output.end(), compressedData.begin(), compressedData.end());
 	try
 	{
-		_sslClient.write(compressedData);
+		_sslClient.write(output);
 	}
 	catch(const Fall::Exception & exception)
 	{
-		std::cout << exception.getMessage() << std::endl;
+		Fall::log(exception.getMessage());
 	}
 }

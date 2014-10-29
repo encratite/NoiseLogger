@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 
 #include <Common/SslClient.hpp>
+#include <Common/Debug.hpp>
 
 namespace
 {
@@ -41,11 +42,14 @@ std::size_t SslClient::read(void * buffer, std::size_t bufferSize)
 
 void SslClient::read(ByteBuffer & buffer)
 {
+	DEBUG_MARK
 	uint8_t readBuffer[defaultBufferSize];
-	std::size_t bytesRead = read(&readBuffer, sizeof(readBuffer));
+	std::size_t bytesRead = read(readBuffer, sizeof(readBuffer));
+	DEBUG_MARK
 	std::size_t bufferSize = buffer.size();
 	buffer.resize(bufferSize + bytesRead);
 	std::memcpy(buffer.data() + bufferSize, &readBuffer, bytesRead);
+	DEBUG_MARK
 }
 
 void SslClient::write(const void * buffer, std::size_t size)

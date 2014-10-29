@@ -9,6 +9,8 @@ compiler=g++
 mkdir -p $objectDirectory
 mkdir -p $outputDirectory
 
+bash BuildCommon.sh
+
 objects=
 for sourceFile in $sourceFiles
 do

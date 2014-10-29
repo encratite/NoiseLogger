@@ -1,5 +1,6 @@
 #include <chrono>
 
+#include <Common/Debug.hpp>
 #include <Common/SslServer.hpp>
 
 SslServer::SslServer():
@@ -9,10 +10,11 @@ SslServer::SslServer():
 
 SslServer::~SslServer()
 {
-	_running = false;
-	close();
+	DEBUG_MARK
+	stop();
 	for(ClientFuture & future : _clientThreads)
 		future.wait();
+	DEBUG_MARK
 }
 
 void SslServer::run(uint16_t port, const std::string & certificatePath, const std::string & certificateAuthorityPath)
@@ -23,17 +25,22 @@ void SslServer::run(uint16_t port, const std::string & certificatePath, const st
 	AddressInfo addressInfo(nullptr, port);
 	const addrinfo & address = addressInfo.getAddress();
 	createSocket(address);
-	int error = bind(_socket, address.ai_addr, address.ai_addrlen);
-	if(error)
+	int option = 1;
+	int result = setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+	if(result != 0)
+		closeAndThrowErrno("Failed to set socket option");
+	result = bind(_socket, address.ai_addr, address.ai_addrlen);
+	if(result != 0)
 		closeAndThrowErrno("Failed to bind socket");
-	error = listen(_socket, SOMAXCONN);
-	if(error)
+	result = listen(_socket, SOMAXCONN);
+	if(result != 0)
 		closeAndThrowErrno("Failed to listen for connections");
 	createSslContext(false, certificatePath, certificateAuthorityPath);
 	SSL_set_accept_state(_ssl);
 	_running = true;
 	while(_running)
 	{
+		DEBUG_MARK
 		sockaddr_storage clientAddress;
 		socklen_t clientAddressSize = sizeof(clientAddress);
 		int clientSocket = accept(_socket, reinterpret_cast<sockaddr *>(&clientAddress), &clientAddressSize);
@@ -50,12 +57,15 @@ void SslServer::run(uint16_t port, const std::string & certificatePath, const st
 		{
 			continue;
 		}
+		DEBUG_MARK
 		if(onNewClient != nullptr)
 		{
 			ClientFuture future = std::async(std::launch::async, [&]() { onNewClient(client); });
 			_clientThreads.push_back(std::move(future));
 		}
+		DEBUG_MARK
 		cleanUpThreads();
+		DEBUG_MARK
 	}
 }
 

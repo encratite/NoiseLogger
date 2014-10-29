@@ -64,36 +64,22 @@ void NoiseLoggerServer::onNewClient(SslClientPointer client)
 
 void NoiseLoggerServer::storePacketInDatabase(const LogPacket & logPacket, const NoiseLoggerServerClient & client)
 {
-	const char * query = "select insert_volume($1::timestamp, $2::int4, $3::text)";
+	const char * query = "select insert_volume(timestamp 'epoch' + ($1::bigint * interval '1 millisecond'), $2::integer, $3)";
 	const int parameterCount = 3;
-	const Oid * parameterTypes = nullptr;
-	int textFormat = 0;
 	int binaryFormat = 1;
 	uint64_t timestamp = logPacket.initialTimestamp;
 	const std::string & address = client.getAddress();
-	int parameterLengths[parameterCount] =
-	{
-		sizeof(uint64_t),
-		sizeof(uint32_t),
-		static_cast<int>(address.length())
-	};
-	int parameterFormats[parameterCount] =
-	{
-		binaryFormat,
-		binaryFormat,
-		textFormat
-	};
 	for(uint16_t sample : logPacket.samples)
 	{
-		uint64_t parameterTimestamp = htobe64(timestamp);
-		uint32_t parameterSample = static_cast<uint32_t>(htobe16(sample));
+		std::string timestampString = std::to_string(timestamp);
+		std::string sampleString = std::to_string(sample);
 		const char * parameterValues[parameterCount] =
 		{
-			reinterpret_cast<char *>(&parameterTimestamp),
-			reinterpret_cast<char *>(&parameterSample),
+			timestampString.c_str(),
+			sampleString.c_str(),
 			address.c_str()
 		};
-		PGresult * result = PQexecParams(_databaseConnection, query, parameterCount, parameterTypes, parameterValues, parameterLengths, parameterFormats, binaryFormat);
+		PGresult * result = PQexecParams(_databaseConnection, query, parameterCount, nullptr, parameterValues, nullptr, nullptr, binaryFormat);
 		checkDatabaseResultStatus(result);
 		timestamp += logPacket.interval;
 	}
@@ -112,7 +98,7 @@ void NoiseLoggerServer::checkDatabaseStatus()
 
 void NoiseLoggerServer::checkDatabaseResultStatus(PGresult * result)
 {
-	if(PQresultStatus(result) != PGRES_COMMAND_OK)
+	if(PQresultStatus(result) != PGRES_TUPLES_OK)
 	{
 		std::string message = "Database query error: ";
 		message += PQerrorMessage(_databaseConnection);

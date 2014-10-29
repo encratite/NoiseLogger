@@ -10,7 +10,7 @@ namespace
 	const std::size_t defaultBufferSize = 4 * 1024;
 }
 
-void SslClient::connect(const std::string & host, uint16_t port, const std::string & certificatePath)
+void SslClient::connect(const std::string & host, uint16_t port, const std::string & certificatePath, const std::string & certificateAuthorityPath)
 {
 	if(!isInvalidSocket())
 		throw Fall::Exception("Unable to connect because the socket is already in use");
@@ -18,12 +18,12 @@ void SslClient::connect(const std::string & host, uint16_t port, const std::stri
 	AddressInfo addressInfo(host, port);
 	const addrinfo & address = addressInfo.getAddress();
 	createSocket(address);
-	int success = ::connect(_socket, address.ai_addr, address.ai_addrlen);
-	if(!success)
+	int result = ::connect(_socket, address.ai_addr, address.ai_addrlen);
+	if(result != 0)
 		closeAndThrowErrno("Failed to connect to server");
-	createSslContext(true, certificatePath);
+	createSslContext(true, certificatePath, certificateAuthorityPath);
 	SSL_set_connect_state(_ssl);
-	int result = SSL_connect(_ssl);
+	result = SSL_connect(_ssl);
 	if(result != 1)
 		closeAndThrowSsl("Failed to perform SSL connection initialization");
 }

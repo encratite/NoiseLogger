@@ -27,7 +27,7 @@ protected:
 	
 	void initializeSsl();
 	void createSocket(const addrinfo & addressInfo);
-	void createSslContext(bool isClient, const std::string & certificatePath);
+	void createSslContext(bool isClient, const std::string & certificatePath, const std::string & certificateAuthorityPath);
 	void createSslStructure();
 	
 	void checkSocket();

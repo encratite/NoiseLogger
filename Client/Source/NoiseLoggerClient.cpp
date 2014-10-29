@@ -95,7 +95,7 @@ bool NoiseLoggerClient::connect()
 	try
 	{
 		if(!_sslClient.isConnected())
-			_sslClient.connect(_configuration.serverHost, _configuration.serverPort, _configuration.certificatePath);
+			_sslClient.connect(_configuration.serverHost, _configuration.serverPort, _configuration.certificatePath, _configuration.certificateAuthorityPath);
 		return true;
 	}
 	catch(const Fall::Exception & exception)

@@ -15,7 +15,7 @@ SslServer::~SslServer()
 		future.wait();
 }
 
-void SslServer::run(uint16_t port, const std::string & certificatePath)
+void SslServer::run(uint16_t port, const std::string & certificatePath, const std::string & certificateAuthorityPath)
 {
 	if(!isInvalidSocket())
 		throw Fall::Exception("Unable to bind socket because it is already in use");
@@ -29,7 +29,7 @@ void SslServer::run(uint16_t port, const std::string & certificatePath)
 	error = listen(_socket, SOMAXCONN);
 	if(error)
 		closeAndThrowErrno("Failed to listen for connections");
-	createSslContext(false, certificatePath);
+	createSslContext(false, certificatePath, certificateAuthorityPath);
 	SSL_set_accept_state(_ssl);
 	_running = true;
 	while(_running)

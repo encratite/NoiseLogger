@@ -3,6 +3,7 @@
 #include <Fall/Configuration.hpp>
 #include <Fall/Exception.hpp>
 
+#include <Common/Debug.hpp>
 #include <Server/NoiseLoggerServer.hpp>
 #include <Server/ServerConfiguration.hpp>
 
@@ -17,7 +18,10 @@ void runServer()
 	ServerConfiguration serverConfiguration;
 	serverConfiguration.serverPort = configuration.getNumber<uint16_t>("serverPort");
 	serverConfiguration.certificatePath = configuration.getString("certificatePath");
+	serverConfiguration.certificateAuthorityPath = configuration.getString("certificateAuthorityPath");
 	serverConfiguration.databaseConnectionString = configuration.getString("databaseConnectionString");
+	NoiseLoggerServer server(serverConfiguration);
+	server.run();
 }
 
 int main(int argc, char ** argv)

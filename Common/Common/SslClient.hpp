@@ -11,7 +11,7 @@ typedef std::shared_ptr<SslClient> SslClientPointer;
 class SslClient: public SslSocket
 {
 public:
-	void connect(const std::string & host, uint16_t port, const std::string & certificatePath);
+	void connect(const std::string & host, uint16_t port, const std::string & certificatePath, const std::string & certificateAuthorityPath);
 	
 	std::size_t read(void * buffer, std::size_t bufferSize);
 	void read(ByteBuffer & buffer);

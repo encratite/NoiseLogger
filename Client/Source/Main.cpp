@@ -14,19 +14,20 @@ namespace
 void runClient()
 {
 	Fall::Configuration configuration(configurationPath);
-	ClientConfiguration loggerConfiguration;
-	loggerConfiguration.deviceName = configuration.getString("deviceName", "default");
-	loggerConfiguration.sampleRate = configuration.getNumber<unsigned>("sampleRate", 11025);
-	loggerConfiguration.latency = configuration.getNumber<unsigned>("latency", 100);
-	loggerConfiguration.readInterval = configuration.getNumber<unsigned>("readInterval", 100);
-	loggerConfiguration.samplesPerPacket = configuration.getNumber<std::size_t>("samplesPerPacket", 600);
-	loggerConfiguration.maximumPacketQueueSize = configuration.getNumber<std::size_t>("maximumPacketQueueSize", 10);
-	loggerConfiguration.compressionLevel = configuration.getNumber<uint32_t>("compressionLevel", 6);
-	loggerConfiguration.serverHost = configuration.getString("serverHost");
-	loggerConfiguration.serverPort = configuration.getNumber<uint16_t>("serverPort");
-	loggerConfiguration.certificatePath = configuration.getString("certificatePath");
-	loggerConfiguration.reconnectDelay = configuration.getNumber<unsigned>("reconnectDelay", 10);
-	NoiseLoggerClient logger(loggerConfiguration);
+	ClientConfiguration clientConfiguration;
+	clientConfiguration.deviceName = configuration.getString("deviceName", "default");
+	clientConfiguration.sampleRate = configuration.getNumber<unsigned>("sampleRate", 11025);
+	clientConfiguration.latency = configuration.getNumber<unsigned>("latency", 100);
+	clientConfiguration.readInterval = configuration.getNumber<unsigned>("readInterval", 100);
+	clientConfiguration.samplesPerPacket = configuration.getNumber<std::size_t>("samplesPerPacket", 600);
+	clientConfiguration.maximumPacketQueueSize = configuration.getNumber<std::size_t>("maximumPacketQueueSize", 10);
+	clientConfiguration.compressionLevel = configuration.getNumber<uint32_t>("compressionLevel", 6);
+	clientConfiguration.serverHost = configuration.getString("serverHost");
+	clientConfiguration.serverPort = configuration.getNumber<uint16_t>("serverPort");
+	clientConfiguration.certificatePath = configuration.getString("certificatePath");
+	clientConfiguration.certificateAuthorityPath = configuration.getString("certificateAuthorityPath");
+	clientConfiguration.reconnectDelay = configuration.getNumber<unsigned>("reconnectDelay", 10);
+	NoiseLoggerClient logger(clientConfiguration);
 	logger.run();
 }
 

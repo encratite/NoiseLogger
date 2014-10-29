@@ -24,8 +24,10 @@ struct ClientConfiguration
 	std::string serverHost;
 	// The TCP port of the log server
 	uint16_t serverPort;
-	// Path to the client certificate chain/private key
+	// Path to the client certificate/private key
 	std::string certificatePath;
+	// Path to the CA certificate
+	std::string certificateAuthorityPath;
 	// Delay between attempts to reconnect (seconds)
 	unsigned reconnectDelay;
 };

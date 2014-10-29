@@ -18,7 +18,7 @@ public:
 	SslServer();
 	~SslServer();
 
-	void run(uint16_t port, const std::string & certificatePath);
+	void run(uint16_t port, const std::string & certificatePath, const std::string & certificateAuthorityPath);
 	void stop();
 
 private:

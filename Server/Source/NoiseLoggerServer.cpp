@@ -3,8 +3,10 @@
 #include <endian.h>
 
 #include <Fall/Console.hpp>
+#include <Fall/String.hpp>
 #include <Fall/Time.hpp>
 
+#include <Common/Debug.hpp>
 #include <Common/LogPacket.hpp>
 #include <Common/Serialization.hpp>
 #include <Server/NoiseLoggerServer.hpp>
@@ -29,7 +31,7 @@ void NoiseLoggerServer::run()
 {
 	_databaseConnection = PQconnectdb(_configuration.databaseConnectionString.c_str());
 	checkDatabaseStatus();
-	_sslServer.run(_configuration.serverPort, _configuration.certificatePath);
+	_sslServer.run(_configuration.serverPort, _configuration.certificatePath, _configuration.certificateAuthorityPath);
 }
 
 void NoiseLoggerServer::onNewClient(SslClientPointer client)
@@ -94,6 +96,7 @@ void NoiseLoggerServer::checkDatabaseStatus()
 	{
 		std::string message = "Database error: ";
 		message += PQerrorMessage(_databaseConnection);
+		message = Fall::trim(message);
 		throw Fall::Exception(message);
 	}
 }
@@ -104,6 +107,7 @@ void NoiseLoggerServer::checkDatabaseResultStatus(PGresult * result)
 	{
 		std::string message = "Database query error: ";
 		message += PQerrorMessage(_databaseConnection);
+		message = Fall::trim(message);
 		PQclear(result);
 		throw Fall::Exception(message);
 	}

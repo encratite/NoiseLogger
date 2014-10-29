@@ -52,7 +52,6 @@ void NoiseLoggerClient::readSamples()
 	Fall::log(std::to_string(unixMilliseconds) + ": " + std::to_string(rootMeanSquare) + " (" + std::to_string(_logSamples.size()) + " sample(s))");
 	if(_logSamples.size() >= _configuration.samplesPerPacket)
 	{
-		Fall::log("Pushing packet");
 		pushPacket();
 		_logSamples.clear();
 	}

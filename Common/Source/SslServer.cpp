@@ -10,11 +10,9 @@ SslServer::SslServer():
 
 SslServer::~SslServer()
 {
-	DEBUG_MARK
 	stop();
 	for(ClientFuture & future : _clientThreads)
 		future.wait();
-	DEBUG_MARK
 }
 
 void SslServer::run(uint16_t port, const std::string & certificatePath, const std::string & certificateAuthorityPath)
@@ -40,7 +38,6 @@ void SslServer::run(uint16_t port, const std::string & certificatePath, const st
 	_running = true;
 	while(_running)
 	{
-		DEBUG_MARK
 		sockaddr_storage clientAddress;
 		socklen_t clientAddressSize = sizeof(clientAddress);
 		int clientSocket = accept(_socket, reinterpret_cast<sockaddr *>(&clientAddress), &clientAddressSize);
@@ -57,15 +54,12 @@ void SslServer::run(uint16_t port, const std::string & certificatePath, const st
 		{
 			continue;
 		}
-		DEBUG_MARK
 		if(onNewClient != nullptr)
 		{
 			ClientFuture future = std::async(std::launch::async, [&]() { onNewClient(client); });
 			_clientThreads.push_back(std::move(future));
 		}
-		DEBUG_MARK
 		cleanUpThreads();
-		DEBUG_MARK
 	}
 }
 

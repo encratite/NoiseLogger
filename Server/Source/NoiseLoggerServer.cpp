@@ -37,29 +37,22 @@ void NoiseLoggerServer::run()
 
 void NoiseLoggerServer::onNewClient(SslClientPointer client)
 {
-	DEBUG_MARK
 	try
 	{
-		DEBUG_MARK
 		NoiseLoggerServerClient serverClient(client);
-		DEBUG_MARK
 		serverClient.log("Client connected");
-		DEBUG_MARK
 		while(true)
 		{
 			LogPacket logPacket;
-			DEBUG_MARK
 			serverClient.readPacket(logPacket);
 			serverClient.log("Received packet from client");
 			storePacketInDatabase(logPacket, serverClient);
-			DEBUG_MARK
 		}
 	}
 	catch(const std::exception & exception)
 	{
 		Fall::log(std::string("Client error: ") + exception.what());
 	}
-	DEBUG_MARK
 }
 
 void NoiseLoggerServer::storePacketInDatabase(const LogPacket & logPacket, const NoiseLoggerServerClient & client)

@@ -49,7 +49,7 @@ void NoiseLoggerClient::readSamples()
 	uint64_t unixMilliseconds = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
 	LogSample logSample(unixMilliseconds, rootMeanSquare);
 	_logSamples.push_back(logSample);
-	Fall::log(std::to_string(unixMilliseconds) + ": " + std::to_string(rootMeanSquare) + " (" + std::to_string(_logSamples.size()) + " sample(s))");
+	// Fall::log(std::to_string(unixMilliseconds) + ": " + std::to_string(rootMeanSquare) + " (" + std::to_string(_logSamples.size()) + " sample(s))");
 	if(_logSamples.size() >= _configuration.samplesPerPacket)
 	{
 		pushPacket();

@@ -1,5 +1,7 @@
 #pragma once
 
-#include <iostream>
+#include <string>
 
-#define DEBUG_MARK std::cout << __FILE__ << " (line " << __LINE__ << ")" << std::endl;
+#include <Fall/Console.hpp>
+
+#define DEBUG_MARK Fall::log(std::string(__FILE__) + " (line " + std::to_string(__LINE__) + ")");

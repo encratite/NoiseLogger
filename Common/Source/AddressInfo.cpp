@@ -1,6 +1,7 @@
-#include <Common/AddressInfo.hpp>
-
 #include <cstring>
+
+#include <Common/AddressInfo.hpp>
+#include <Common/Debug.hpp>
 
 AddressInfo::AddressInfo():
 	_addressInfo(nullptr)

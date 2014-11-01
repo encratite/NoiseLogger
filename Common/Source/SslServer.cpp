@@ -47,16 +47,22 @@ void SslServer::run(uint16_t port, const std::string & certificatePath, const st
 				break;
 			closeAndThrowErrno("Failed to accept connection");
 		}
-		SslClientPointer client(new SslClient);
+		SslClient * client = new SslClient;
 		client->setClientData(clientSocket, _sslContext);
 		int result = SSL_accept(client->getSslStructure());
 		if(result != 1)
 		{
+			delete client;
 			continue;
 		}
 		if(onNewClient != nullptr)
 		{
-			ClientFuture future = std::async(std::launch::async, [&]() { onNewClient(client); });
+			ClientFuture future = std::async(std::launch::async, [&]()
+				{
+					SslClientPointer clientPointer(client);
+					onNewClient(clientPointer);
+				}
+			);
 			_clientThreads.push_back(std::move(future));
 		}
 		cleanUpThreads();
